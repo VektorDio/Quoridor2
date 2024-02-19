@@ -131,7 +131,7 @@ export default class Game implements Model{
 	}
 
 	initializeEdges(): void {
-		for (let i = 0; i < (this.gridWidth * (this.gridWidth - 1) * 2); i++) {
+		for (let i = 0; i < ((9 * 9) + (9 * 8)); i++) {
 			const x = i % this.gridWidth
 			const y = (i - x) / this.gridWidth
 
