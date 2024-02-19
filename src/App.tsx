@@ -8,7 +8,7 @@ function App() {
 	const [count, setCount] = useState(0)
 
 	const game = new Game()
-
+	game.initializeEdges()
 	console.log(game)
 
 	return (

@@ -131,8 +131,13 @@ export default class Game implements Model{
 	}
 
 	initializeEdges(): void {
-		for (let i = 0; i <= 9 * 17; i++) {
-			if ((i / 8) % 2 !== 0) {
+		for (let i = 0; i < (this.gridWidth * (this.gridWidth - 1) * 2); i++) {
+			const x = i % this.gridWidth
+			const y = (i - x) / this.gridWidth
+
+			const redundantEdge = (y % 2 == 0) && (x == (this.gridWidth - 1))
+
+			if (!redundantEdge) {
 				this.gridEdges.add(i)
 			}
 		}
