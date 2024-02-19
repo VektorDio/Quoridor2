@@ -9,6 +9,9 @@ function App() {
 
 	const game = new Game()
 	game.initializeEdges()
+	game.initializeWalls()
+	game.executeMove({position: "00v", removedWalls: ["00v"]})
+
 	console.log(game)
 
 	return (

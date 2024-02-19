@@ -31,7 +31,7 @@ export default class Game implements Model{
 
 	executeWallMove(move: MoveWall): void {
 		const currentPlayer = this.getCurrentPlayer()
-		currentPlayer.walls =- 1
+		currentPlayer.walls--
 		this.wallsAvailable.delete(move.position)
 		const wall: string[] = move.position.split("")
 		const x = parseInt(wall[0])
@@ -60,14 +60,17 @@ export default class Game implements Model{
 
 		if (this.wallsAvailable.has(wall1)) {
 			this.wallsAvailable.delete(wall1)
+
 			move.removedWalls.push(wall1)
 		}
 		if (this.wallsAvailable.has(wall2)) {
 			this.wallsAvailable.delete(wall2)
+
 			move.removedWalls.push(wall2)
 		}
 		if (this.wallsAvailable.has(wall3)) {
 			this.wallsAvailable.delete(wall3)
+
 			move.removedWalls.push(wall3)
 		}
 
@@ -131,7 +134,8 @@ export default class Game implements Model{
 	}
 
 	initializeEdges(): void {
-		for (let i = 0; i < ((9 * 9) + (9 * 8)); i++) {
+		const amountOfEdges = (this.gridWidth * this.gridWidth) + (this.gridWidth * (this.gridWidth - 1))
+		for (let i = 0; i < amountOfEdges; i++) { // brain cancer optimisation
 			const x = i % this.gridWidth
 			const y = (i - x) / this.gridWidth
 
@@ -139,6 +143,17 @@ export default class Game implements Model{
 
 			if (!redundantEdge) {
 				this.gridEdges.add(i)
+			}
+		}
+	}
+
+	initializeWalls(): void {
+		for (let i = 0; i < this.gridWidth - 1; i++) {
+			for (let j = 0; j < this.gridWidth - 1; j++){
+				const wallH = "".concat(String(i), String(j), "h")
+				const wallV = "".concat(String(i), String(j), "v")
+				this.wallsAvailable.add(wallV)
+				this.wallsAvailable.add(wallH)
 			}
 		}
 	}
