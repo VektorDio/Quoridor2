@@ -1,3 +1,5 @@
-export default class Player {
-	id: number;
+export type Player = {
+	x: number;
+	y: number;
+	walls: number;
 }
