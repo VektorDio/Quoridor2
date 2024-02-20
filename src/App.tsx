@@ -12,13 +12,16 @@ function App() {
 	game.initializeWalls()
 
 	//console.log(game)
-	//game.executeMove({position: "00h", removedWalls: []})
-	game.executeMove({newX: 0, newY: 0})
-	console.log(game.showGameState())
-	game.undoLastMove()
-	console.log(game.showGameState())
-
+	//game.executeMove({position: "31h", removedWalls: []})
+	//game.executeMove({newX: 4, newY: 0})
+	//game.executeMove({newX: 4, newY: 1})
+	//game.executeMove({position: "41v", removedWalls: []})
+	// console.log(game.showGameState())
+	// game.undoLastMove()
+	//console.log(game.showGameState())
 	//console.log(game)
+
+	console.log(game.generatePossibleMoves())
 
 	return (
 		<>

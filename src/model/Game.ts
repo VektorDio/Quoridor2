@@ -72,8 +72,10 @@ export default class Game implements Model{
 			const currentPlayer = this.getCurrentPlayer()
 
 			if (isPlayerMove(lastMove)) {
-				currentPlayer.x = lastMove.previousX
-				currentPlayer.y = lastMove.previousY
+				if (lastMove.previousX != null && lastMove.previousY != null) { // typescript go brr
+					currentPlayer.x = lastMove.previousX
+					currentPlayer.y = lastMove.previousY
+				}
 			} else {
 				lastMove.removedWalls.forEach(e => this.wallsAvailable.add(e))
 				const { x, y, orientation } = this.wallToString(lastMove.position)
@@ -95,6 +97,10 @@ export default class Game implements Model{
 
 	getCurrentPlayer(): Player{
 		return this.players[this.playerToMakeMove]
+	}
+
+	getNextPlayer(): Player {
+		return this.playerToMakeMove === 0 ? this.players[1] : this.players[0]
 	}
 
 	wallToString(wallPosition: string): {x: number, y: number, orientation: string} {
@@ -148,6 +154,85 @@ export default class Game implements Model{
 				this.wallsAvailable.add(wallH)
 			}
 		}
+	}
+
+	generatePossibleMoves(): Move[] {
+		const moveSet = []
+		const currentPlayer = this.getCurrentPlayer()
+		const nextPlayer = this.getNextPlayer()
+
+		if (this.gridEdges.has(this.getTopEdge(currentPlayer.x, currentPlayer.y))) {
+			// check if there is another player above
+			if (currentPlayer.x === nextPlayer.x && currentPlayer.y === (nextPlayer.y + 1)) {
+				if (this.gridEdges.has(this.getTopEdge(nextPlayer.x, nextPlayer.y))) {
+					moveSet.push({newX: currentPlayer.x, newY: currentPlayer.y - 2}) // jump over other player
+				} else {
+					if (this.gridEdges.has(this.getLeftEdge(nextPlayer.x, nextPlayer.y))) {
+						moveSet.push({newX: currentPlayer.x - 1, newY: currentPlayer.y - 1}) // jump left to the other player
+					}
+					if (this.gridEdges.has(this.getRightEdge(nextPlayer.x, nextPlayer.y))) {
+						moveSet.push({newX: currentPlayer.x + 1, newY: currentPlayer.y - 1}) // jump right to the other player
+					}
+				}
+			} else {
+				moveSet.push({newX: currentPlayer.x, newY: currentPlayer.y - 1})
+			}
+		}
+
+		if (this.gridEdges.has(this.getRightEdge(currentPlayer.x, currentPlayer.y))) {
+			if (currentPlayer.x === (nextPlayer.x - 1) && currentPlayer.y === nextPlayer.y) {
+				if (this.gridEdges.has(this.getRightEdge(nextPlayer.x, nextPlayer.y))) {
+					moveSet.push({newX: currentPlayer.x + 2, newY: currentPlayer.y})
+				} else {
+					if (this.gridEdges.has(this.getTopEdge(nextPlayer.x, nextPlayer.y))) {
+						moveSet.push({newX: currentPlayer.x + 1, newY: currentPlayer.y - 1})
+					}
+					if (this.gridEdges.has(this.getBottomEdge(nextPlayer.x, nextPlayer.y))) {
+						moveSet.push({newX: currentPlayer.x + 1, newY: currentPlayer.y + 1})
+					}
+				}
+			} else {
+				moveSet.push({newX: currentPlayer.x + 1, newY: currentPlayer.y})
+			}
+		}
+
+		if (this.gridEdges.has(this.getLeftEdge(currentPlayer.x, currentPlayer.y))) {
+			if (currentPlayer.x === (nextPlayer.x + 1) && currentPlayer.y === nextPlayer.y) {
+				if (this.gridEdges.has(this.getLeftEdge(nextPlayer.x, nextPlayer.y))) {
+					moveSet.push({newX: currentPlayer.x - 2, newY: currentPlayer.y})
+				} else {
+					if (this.gridEdges.has(this.getTopEdge(nextPlayer.x, nextPlayer.y))) {
+						moveSet.push({newX: currentPlayer.x - 1, newY: currentPlayer.y - 1})
+					}
+					if (this.gridEdges.has(this.getBottomEdge(nextPlayer.x, nextPlayer.y))) {
+						moveSet.push({newX: currentPlayer.x - 1, newY: currentPlayer.y + 1})
+					}
+				}
+			} else {
+				moveSet.push({newX: currentPlayer.x - 1, newY: currentPlayer.y})
+			}
+		}
+
+		if (this.gridEdges.has(this.getBottomEdge(currentPlayer.x, currentPlayer.y))) {
+			if (currentPlayer.x === nextPlayer.x && currentPlayer.y === (nextPlayer.y - 1)) {
+				if (this.gridEdges.has(this.getBottomEdge(nextPlayer.x, nextPlayer.y))) {
+					moveSet.push({newX: currentPlayer.x, newY: currentPlayer.y + 2})
+				} else {
+					if (this.gridEdges.has(this.getLeftEdge(nextPlayer.x, nextPlayer.y))) {
+						moveSet.push({newX: currentPlayer.x - 1, newY: currentPlayer.y + 1})
+					}
+					if (this.gridEdges.has(this.getRightEdge(nextPlayer.x, nextPlayer.y))) {
+						moveSet.push({newX: currentPlayer.x + 1, newY: currentPlayer.y + 1})
+					}
+				}
+			} else {
+				moveSet.push({newX: currentPlayer.x, newY: currentPlayer.y + 1})
+			}
+		}
+
+		this.wallsAvailable.forEach(value => moveSet.push({position: value, removedWalls: []}))
+
+		return moveSet
 	}
 
 	showGameState() {
