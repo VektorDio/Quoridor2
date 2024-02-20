@@ -230,7 +230,9 @@ export default class Game implements Model{
 			}
 		}
 
-		this.wallsAvailable.forEach(value => moveSet.push({position: value, removedWalls: []}))
+		if (currentPlayer.walls > 0) {
+			this.wallsAvailable.forEach(value => moveSet.push({position: value, removedWalls: []}))
+		}
 
 		return moveSet
 	}

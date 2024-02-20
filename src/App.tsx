@@ -20,8 +20,10 @@ function App() {
 	// game.undoLastMove()
 	//console.log(game.showGameState())
 	//console.log(game)
-
+	const startTime = performance.now()
 	console.log(game.generatePossibleMoves())
+	const endTime = performance.now()
+	console.log(`Call took ${endTime - startTime} milliseconds`)
 
 	return (
 		<>
