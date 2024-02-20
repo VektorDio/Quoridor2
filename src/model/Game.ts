@@ -11,12 +11,7 @@ export default class Game implements Model{
 	gridWidth = 9;
 
 	executeMove(move: Move): void {
-		if (isPlayerMove(move)) {
-			this.executePlayerMove(move)
-		} else {
-			this.executeWallMove(move)
-		}
-
+		isPlayerMove(move) ? this.executePlayerMove(move) : this.executeWallMove(move)
 		this.moveHistory.push(move)
 		this.playerToMakeMove = this.playerToMakeMove === 0 ? 1 : 0
 	}
@@ -31,28 +26,26 @@ export default class Game implements Model{
 
 	executeWallMove(move: MoveWall): void {
 		const currentPlayer = this.getCurrentPlayer()
-		currentPlayer.walls--
+		currentPlayer.walls-- // reducing player wall counter
 		this.wallsAvailable.delete(move.position)
-		const wall: string[] = move.position.split("")
-		const x = parseInt(wall[0])
-		const y = parseInt(wall[1])
+		const { x, y, orientation } = this.wallToString(move.position)
 
 		let wall1, wall2, wall3, firstEdge, secondEdge
 
-		if (wall[3] === "h") {
-			wall1 = "".concat(String((x + 1)), String(y), "h")
-			wall2 = "".concat(String((x - 1)), String(y), "h")
-			wall3 = "".concat(String((x)), String(y), "v")
+		if (orientation === "h") {
+			wall1 = this.stringToWall((x + 1), y, "h")
+			wall2 = this.stringToWall((x - 1), y, "h")
+			wall3 = this.stringToWall(x, y, "v")
 
-			firstEdge = x + ((y - 1) * this.gridWidth)
-			secondEdge = (x + 1) + ((y - 1) * this.gridWidth)
+			firstEdge = this.getBottomEdge(x, y)
+			secondEdge = this.getBottomEdge(x + 1, y)
 		} else {
-			wall1 = "".concat(String((x)), String(y + 1), "v")
-			wall2 = "".concat(String((x)), String(y - 1), "v")
-			wall3 = "".concat(String((x)), String(y), "h")
+			wall1 = this.stringToWall(x, (y + 1), "v")
+			wall2 = this.stringToWall(x, (y - 1), "v")
+			wall3 = this.stringToWall(x, y, "h")
 
-			firstEdge = x + (y * this.gridWidth)
-			secondEdge = x + ((y - 2) * this.gridWidth)
+			firstEdge = this.getRightEdge(x, y)
+			secondEdge = this.getRightEdge(x, y + 1)
 		}
 
 		this.gridEdges.delete(firstEdge)
@@ -60,47 +53,38 @@ export default class Game implements Model{
 
 		if (this.wallsAvailable.has(wall1)) {
 			this.wallsAvailable.delete(wall1)
-
 			move.removedWalls.push(wall1)
 		}
 		if (this.wallsAvailable.has(wall2)) {
 			this.wallsAvailable.delete(wall2)
-
 			move.removedWalls.push(wall2)
 		}
 		if (this.wallsAvailable.has(wall3)) {
 			this.wallsAvailable.delete(wall3)
-
 			move.removedWalls.push(wall3)
 		}
-
-
 	}
 
 	undoLastMove(): void {
 		const lastMove = this.moveHistory.pop()
-		this.playerToMakeMove = this.playerToMakeMove === 0 ? 1 : 0
-		const currentPlayer = this.getCurrentPlayer()
-
 		if (lastMove !== undefined) {
+			this.playerToMakeMove = this.playerToMakeMove === 0 ? 1 : 0
+			const currentPlayer = this.getCurrentPlayer()
+
 			if (isPlayerMove(lastMove)) {
-				if (lastMove.previousX != null && lastMove.previousY != null) {
-					currentPlayer.x = lastMove.previousX
-					currentPlayer.y = lastMove.previousY
-				}
+				currentPlayer.x = lastMove.previousX
+				currentPlayer.y = lastMove.previousY
 			} else {
 				lastMove.removedWalls.forEach(e => this.wallsAvailable.add(e))
-				const wall: string[] = lastMove.position.split("")
-				const x = parseInt(wall[0])
-				const y = parseInt(wall[1])
+				const { x, y, orientation } = this.wallToString(lastMove.position)
 
 				let firstEdge, secondEdge
-				if (wall[3] === "h") {
-					firstEdge = x + ((y - 1) * this.gridWidth)
-					secondEdge = (x + 1) + ((y - 1) * this.gridWidth)
+				if (orientation === "h") {
+					firstEdge = this.getBottomEdge(x, y)
+					secondEdge = this.getBottomEdge(x + 1, y)
 				} else {
-					firstEdge = x + (y * this.gridWidth)
-					secondEdge = x + ((y - 2) * this.gridWidth)
+					firstEdge = this.getRightEdge(x, y)
+					secondEdge = this.getRightEdge(x, y + 1)
 				}
 
 				this.gridEdges.add(firstEdge)
@@ -113,35 +97,43 @@ export default class Game implements Model{
 		return this.players[this.playerToMakeMove]
 	}
 
-	checkLeftEdge(nodeX: number, nodeY: number): boolean {
-		const edge = (nodeX - 1) + (nodeY * this.gridWidth)
-		return this.gridEdges.has(edge)
+	wallToString(wallPosition: string): {x: number, y: number, orientation: string} {
+		const decodedPosition = wallPosition.split("")
+		return {x: parseInt(decodedPosition[0]), y: parseInt(decodedPosition[1]), orientation: decodedPosition[2]}
 	}
 
-	checkRightEdge(nodeX: number, nodeY: number): boolean {
-		const edge = nodeX + (nodeY * this.gridWidth)
-		return this.gridEdges.has(edge)
+	stringToWall(x: number, y: number, orientation: string): string {
+		return "".concat(String(x), String(y), orientation)
 	}
 
-	checkBottomEdge(nodeX: number, nodeY: number): boolean {
-		const edge = nodeX + ((nodeY + 1) * this.gridWidth)
-		return this.gridEdges.has(edge)
+	getLeftEdge(nodeX: number, nodeY: number): number {
+		return (nodeX - 1) + (nodeY * 2 * this.gridWidth)
 	}
 
-	checkUpperEdge(nodeX: number, nodeY: number): boolean {
-		const edge = nodeX + ((nodeY - 1) * this.gridWidth)
-		return this.gridEdges.has(edge)
+	getRightEdge(nodeX: number, nodeY: number): number {
+		return (nodeX) + (nodeY * 2 * this.gridWidth)
+	}
+
+	getTopEdge(nodeX: number, nodeY: number): number {
+		return (nodeX) + ((nodeY * 2 - 1) * this.gridWidth)
+	}
+
+	getBottomEdge(nodeX: number, nodeY: number): number {
+		return (nodeX) + ((nodeY * 2 + 1) * this.gridWidth)
 	}
 
 	initializeEdges(): void {
+		// actually, its (width * (width - 1)) * 2, but we need this to make it square
 		const amountOfEdges = (this.gridWidth * this.gridWidth) + (this.gridWidth * (this.gridWidth - 1))
-		for (let i = 0; i < amountOfEdges; i++) { // brain cancer optimisation
+		// generating edges as linear sequence
+		for (let i = 0; i < amountOfEdges; i++) {
 			const x = i % this.gridWidth
 			const y = (i - x) / this.gridWidth
 
-			const redundantEdge = (y % 2 == 0) && (x == (this.gridWidth - 1))
+			// removing rightmost horizontal edges, as there newer will be existing
+			const isRedundantEdge = (y % 2 == 0) && (x == (this.gridWidth - 1))
 
-			if (!redundantEdge) {
+			if (!isRedundantEdge) {
 				this.gridEdges.add(i)
 			}
 		}
@@ -156,119 +148,5 @@ export default class Game implements Model{
 				this.wallsAvailable.add(wallH)
 			}
 		}
-	}
-	
-	testFunction() {
-		//const currentPlayer = this.getCurrentPlayer()
-		// const direction:
-		// 		"right" | "up" | "down" | "left" |
-		// 		"jumpUp" | "jumpLeft" | "jumpRight" | "jumpDown" |
-		// 		"jumpUpRight" | "jumpUpLeft" |
-		// 		"jumpDownRight" | "jumpDownLeft" |
-		// 		"jumpLeftDown" | "jumpLeftUp" |
-		// 		"jumpRightDown" | "jumpRightUp" = null
-		//
-		// switch (direction) {
-		// 	case "down":
-		// 		if (this.checkBottomEdge(currentPlayer.x, currentPlayer.y)) {
-		// 			currentPlayer.y += 1
-		// 		}
-		// 		break
-		// 	case "up":
-		// 		if (this.checkUpperEdge(currentPlayer.x, currentPlayer.y)) {
-		// 			currentPlayer.y -= 1
-		// 		}
-		// 		break
-		// 	case "left":
-		// 		if (this.checkLeftEdge(currentPlayer.x, currentPlayer.y)) {
-		// 			currentPlayer.x -= 1
-		// 		}
-		// 		break
-		// 	case "right":
-		// 		if (this.checkRightEdge(currentPlayer.x, currentPlayer.y)) {
-		// 			currentPlayer.x += 1
-		// 		}
-		// 		break
-		// 	case "jumpUp":
-		// 		if (this.checkUpperEdge(currentPlayer.x, currentPlayer.y) &&
-		// 			this.checkUpperEdge(currentPlayer.x, currentPlayer.y - 1)) {
-		// 			currentPlayer.y -= 2
-		// 		}
-		// 		break
-		// 	case "jumpDown":
-		// 		if (this.checkBottomEdge(currentPlayer.x, currentPlayer.y) &&
-		// 			this.checkBottomEdge(currentPlayer.x, currentPlayer.y + 1)) {
-		// 			currentPlayer.y += 2
-		// 		}
-		// 		break
-		// 	case "jumpLeft":
-		// 		if (this.checkLeftEdge(currentPlayer.x, currentPlayer.y) &&
-		// 			this.checkLeftEdge(currentPlayer.x - 1, currentPlayer.y)) {
-		// 			currentPlayer.x -= 2
-		// 		}
-		// 		break
-		// 	case "jumpRight":
-		// 		if (this.checkRightEdge(currentPlayer.x, currentPlayer.y) &&
-		// 			this.checkRightEdge(currentPlayer.x + 1, currentPlayer.y)) {
-		// 			currentPlayer.x += 2
-		// 		}
-		// 		break
-		// 	case "jumpUpLeft":
-		// 		if (this.checkUpperEdge(currentPlayer.x, currentPlayer.y) &&
-		// 			this.checkLeftEdge(currentPlayer.x, currentPlayer.y - 1)) {
-		// 			currentPlayer.x -= 1
-		// 			currentPlayer.y -= 1
-		// 		}
-		// 		break
-		// 	case "jumpUpRight":
-		// 		if (this.checkUpperEdge(currentPlayer.x, currentPlayer.y) &&
-		// 			this.checkRightEdge(currentPlayer.x, currentPlayer.y - 1)) {
-		// 			currentPlayer.x += 1
-		// 			currentPlayer.y -= 1
-		// 		}
-		// 		break
-		// 	case "jumpDownLeft":
-		// 		if (this.checkBottomEdge(currentPlayer.x, currentPlayer.y) &&
-		// 			this.checkLeftEdge(currentPlayer.x, currentPlayer.y + 1)) {
-		// 			currentPlayer.x -= 1
-		// 			currentPlayer.y += 1
-		// 		}
-		// 		break
-		// 	case "jumpDownRight":
-		// 		if (this.checkBottomEdge(currentPlayer.x, currentPlayer.y) &&
-		// 			this.checkRightEdge(currentPlayer.x, currentPlayer.y + 1)) {
-		// 			currentPlayer.x += 1
-		// 			currentPlayer.y += 1
-		// 		}
-		// 		break
-		// 	case "jumpLeftUp":
-		// 		if (this.checkLeftEdge(currentPlayer.x, currentPlayer.y) &&
-		// 			this.checkUpperEdge(currentPlayer.x - 1, currentPlayer.y)) {
-		// 			currentPlayer.x -= 1
-		// 			currentPlayer.y -= 1
-		// 		}
-		// 		break
-		// 	case "jumpLeftDown":
-		// 		if (this.checkLeftEdge(currentPlayer.x, currentPlayer.y) &&
-		// 			this.checkBottomEdge(currentPlayer.x - 1, currentPlayer.y)) {
-		// 			currentPlayer.x -= 1
-		// 			currentPlayer.y += 1
-		// 		}
-		// 		break
-		// 	case "jumpRightUp":
-		// 		if (this.checkRightEdge(currentPlayer.x, currentPlayer.y) &&
-		// 			this.checkUpperEdge(currentPlayer.x + 1, currentPlayer.y)) {
-		// 			currentPlayer.x += 1
-		// 			currentPlayer.y -= 1
-		// 		}
-		// 		break
-		// 	case "jumpRightDown":
-		// 		if (this.checkRightEdge(currentPlayer.x, currentPlayer.y) &&
-		// 			this.checkBottomEdge(currentPlayer.x + 1, currentPlayer.y)) {
-		// 			currentPlayer.x += 1
-		// 			currentPlayer.y += 1
-		// 		}
-		// 		break
-		// }
 	}
 }

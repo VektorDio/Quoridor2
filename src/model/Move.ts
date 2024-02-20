@@ -1,7 +1,7 @@
 export type MovePlayer = {
 	newX: number,
 	newY: number
-	previousX?: number,
+	previousX?: number
 	previousY?: number
 }
 

@@ -1,5 +1,5 @@
 export type Player = {
-	x: number;
-	y: number;
+	x: number | undefined;
+	y: number | undefined;
 	walls: number;
 }
