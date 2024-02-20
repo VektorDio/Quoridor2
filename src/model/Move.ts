@@ -7,7 +7,7 @@ export type MovePlayer = {
 
 export type MoveWall = {
 	position: string,
-	removedWalls: [string],
+	removedWalls: string[],
 }
 
 export type Move = MovePlayer | MoveWall

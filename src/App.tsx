@@ -10,14 +10,13 @@ function App() {
 	const game = new Game()
 	game.initializeEdges()
 	game.initializeWalls()
-	const node = {x: 8, y: 8}
-	console.log({
-		up: game.getTopEdge(node.x, node.y),
-		right: game.getRightEdge(node.x, node.y),
-		left: game.getLeftEdge(node.x, node.y),
-		down: game.getBottomEdge(node.x, node.y)
-	})
-	//game.executeMove({position: "00v"})
+
+	//console.log(game)
+	//game.executeMove({position: "00h", removedWalls: []})
+	game.executeMove({newX: 0, newY: 0})
+	console.log(game.showGameState())
+	game.undoLastMove()
+	console.log(game.showGameState())
 
 	//console.log(game)
 

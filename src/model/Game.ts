@@ -6,7 +6,7 @@ export default class Game implements Model{
 	gridEdges = new Set<number>();
 	moveHistory: Move[] = [];
 	playerToMakeMove= 0; // counter mod amount of player
-	players= [{x: 5, y: 0, walls: 10}, {x: 8, y: 5, walls: 10}];
+	players= [{x: 4, y: 0, walls: 10}, {x: 4, y: 8, walls: 10}];
 	wallsAvailable = new Set<string>();
 	gridWidth = 9;
 
@@ -148,5 +148,26 @@ export default class Game implements Model{
 				this.wallsAvailable.add(wallH)
 			}
 		}
+	}
+
+	showGameState() {
+		const stateSize = this.gridWidth * 2 - 1
+		const state = new Array(stateSize).fill(0).map(() => new Array(stateSize).fill("0")) // i love js
+
+		for (let i = 0; i < this.gridWidth; i++) {
+			for (let j = 0; j < this.gridWidth; j++) {
+				if(this.gridEdges.has(this.getRightEdge(i, j))) {
+					state[j*2][(i * 2) + 1] = "-"
+				}
+				if(this.gridEdges.has(this.getBottomEdge(i, j))) {
+					state[(j * 2) + 1][i*2] = "|"
+				}
+			}
+		}
+
+		this.players.forEach((value, index) => {
+			state[value.y * 2][value.x * 2] = index + 1
+		})
+		return state
 	}
 }
