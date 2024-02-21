@@ -1,5 +1,7 @@
+import {Cell} from "./Cell.ts";
+
 export type Player = {
-	x: number;
-	y: number;
+	position: Cell,
 	walls: number;
+	goal: Cell[];
 }

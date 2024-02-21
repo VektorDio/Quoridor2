@@ -1,8 +1,8 @@
+import {Cell} from "./Cell.ts";
+
 export type MovePlayer = {
-	newX: number,
-	newY: number
-	previousX?: number
-	previousY?: number
+	newPosition: Cell,
+	previousPosition?: Cell
 }
 
 export type MoveWall = {
@@ -13,6 +13,6 @@ export type MoveWall = {
 export type Move = MovePlayer | MoveWall
 
 export const isPlayerMove = (move: Move) : move is MovePlayer => {
-	return (move as MovePlayer).newX !== undefined
+	return (move as MovePlayer).newPosition !== undefined
 }
 
