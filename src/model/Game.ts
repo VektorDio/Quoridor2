@@ -23,7 +23,8 @@ export default class Game implements Model{
 				{x: 6, y: 8},
 				{x: 7, y: 8},
 				{x: 8, y: 8},
-			]
+			],
+			goalStr: new Set(["08", "18", "28", "38", "48", "58", "68", "78", "88"])
 		},
 		{
 			position: {x: 4, y: 8},
@@ -38,7 +39,8 @@ export default class Game implements Model{
 				{x: 6, y: 0},
 				{x: 7, y: 0},
 				{x: 8, y: 0},
-			]
+			],
+			goalStr: new Set(["00", "10", "20", "30", "40", "50", "60", "70", "80"])
 		}
 	];
 
@@ -121,7 +123,7 @@ export default class Game implements Model{
 
 			if (isPlayerMove(lastMove)) {
 				if (lastMove.previousPosition != null) { // typescript go brr
-					currentPlayer.position = { ...lastMove.previousPosition}
+					currentPlayer.position = { ...lastMove.previousPosition } // remove
 				}
 			} else {
 				const { x, y, orientation } = this.wallToString(lastMove.position)
@@ -195,9 +197,9 @@ export default class Game implements Model{
 	}
 
 	checkWinCondition(playerNode: Cell, playerGoal: Cell[]): boolean {
-		const toDo: Cell[] = []
+		const toDo: Cell[] = [{x: playerNode.x, y:playerNode.y}]
 		const done: Cell[] = []
-		toDo.push({x: playerNode.x, y:playerNode.y})
+
 		while (toDo.length > 0) {
 			const node = toDo.pop()
 			if (node !== undefined) { // typescript cancer
@@ -216,7 +218,6 @@ export default class Game implements Model{
 		return false
 	}
 
-
 	adjustedNodes(node: Cell): Cell[] {
 		const nodes = []
 		if(this.checkTopEdge(node.x, node.y)) {
@@ -230,6 +231,47 @@ export default class Game implements Model{
 		}
 		if(this.checkBottomEdge(node.x, node.y)) {
 			nodes.push({x: node.x, y: node.y + 1})
+		}
+		return nodes
+	}
+
+	checkWinConditionStr(playerNode: Cell, playerGoal: Set<string>): boolean {
+		const toDo:Set<string> = new Set()
+		const done:Set<string> = new Set()
+		toDo.add(playerNode.x + "" + playerNode.y)
+
+		while (toDo.size > 0) {
+			const node = toDo.values().next().value
+			toDo.delete(node)
+			done.add(node)
+			for (const adjustedNode of this.adjustedNodesStr(node)) {
+				if (playerGoal.has(adjustedNode)) {
+					return true
+				}
+				if (!done.has(adjustedNode) && !toDo.has(adjustedNode)) {
+					toDo.add(adjustedNode)
+				}
+			}
+		}
+		return false
+	}
+
+	adjustedNodesStr(node: string): string[] {
+		const nodes = []
+		const x = parseInt(node[0])
+		const y = parseInt(node[1])
+
+		if(this.checkTopEdge(x, y)) {
+			nodes.push(x + "" + (y - 1))
+		}
+		if(this.checkLeftEdge(x, y)) {
+			nodes.push((x - 1) + "" + y)
+		}
+		if(this.checkRightEdge(x, y)) {
+			nodes.push((x + 1) + "" + y)
+		}
+		if(this.checkBottomEdge(x, y)) {
+			nodes.push(x + "" + (y + 1))
 		}
 		return nodes
 	}

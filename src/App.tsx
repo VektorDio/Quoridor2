@@ -22,17 +22,16 @@ function App() {
 	//game.executeMove({newX: 4, newY: 0})
 	//game.executeMove({newX: 4, newY: 1})
 	//game.executeMove({newX: 4, newY: 1})
-	game.executeMove({position: "30v", removedWalls: []})
-	game.executeMove({position: "40v", removedWalls: []})
-	game.executeMove({position: "41h", removedWalls: []})
+	//game.executeMove({position: "30v", removedWalls: []})
+	//game.executeMove({position: "40v", removedWalls: []})
+	//game.executeMove({position: "41h", removedWalls: []})
 	// console.log(game.showGameState())
 	// game.undoLastMove()
 	//console.log(game.showGameState())
 	//console.log(game)
 	//console.log(game.generatePossibleMoves())
-	// const startTime = performance.now()
-	// const endTime = performance.now()
-	// console.log(`Call took ${endTime - startTime} milliseconds`)
+
+	//console.log(`Call took ${endTime - startTime} milliseconds`)
 
 	return (
 		<>
