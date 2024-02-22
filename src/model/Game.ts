@@ -1,7 +1,7 @@
 import Model from "./Model.ts";
 import {isPlayerMove, Move, MovePlayer, MoveWall} from "./Move.ts";
 import {Player} from "./Player.ts";
-import {Cell} from "./Cell.ts";
+import {areCellsEqual, Cell} from "./Cell.ts";
 
 export default class Game implements Model{
 	gridEdges = new Set<number>();
@@ -42,7 +42,6 @@ export default class Game implements Model{
 		}
 	];
 
-
 	executeMove(move: Move): void {
 		isPlayerMove(move) ? this.executePlayerMove(move) : this.executeWallMove(move)
 		this.moveHistory.push(move)
@@ -66,6 +65,7 @@ export default class Game implements Model{
 			secondEdge = this.getRightEdge(x, y + 1)
 		}
 
+		// trying to place wall
 		this.gridEdges.delete(firstEdge)
 		this.gridEdges.delete(secondEdge)
 
@@ -124,8 +124,9 @@ export default class Game implements Model{
 					currentPlayer.position = { ...lastMove.previousPosition}
 				}
 			} else {
-				lastMove.removedWalls.forEach(e => this.wallsAvailable.add(e))
 				const { x, y, orientation } = this.wallToString(lastMove.position)
+				// restore available moves
+				lastMove.removedWalls.forEach(e => this.wallsAvailable.add(e))
 
 				let firstEdge, secondEdge
 				if (orientation === "h") {
@@ -136,6 +137,7 @@ export default class Game implements Model{
 					secondEdge = this.getRightEdge(x, y + 1)
 				}
 
+				// restoring edges
 				this.gridEdges.add(firstEdge)
 				this.gridEdges.add(secondEdge)
 			}
@@ -176,6 +178,22 @@ export default class Game implements Model{
 		return (nodeX) + ((nodeY * 2 + 1) * this.gridWidth)
 	}
 
+	checkLeftEdge(nodeX: number, nodeY: number): boolean {
+		return this.gridEdges.has(this.getLeftEdge(nodeX, nodeY))
+	}
+
+	checkRightEdge(nodeX: number, nodeY: number): boolean {
+		return this.gridEdges.has(this.getRightEdge(nodeX, nodeY))
+	}
+
+	checkTopEdge(nodeX: number, nodeY: number): boolean {
+		return this.gridEdges.has(this.getTopEdge(nodeX, nodeY))
+	}
+
+	checkBottomEdge(nodeX: number, nodeY: number): boolean {
+		return this.gridEdges.has(this.getBottomEdge(nodeX, nodeY))
+	}
+
 	checkWinCondition(playerNode: Cell, playerGoal: Cell[]): boolean {
 		const toDo: Cell[] = []
 		const done: Cell[] = []
@@ -185,11 +203,11 @@ export default class Game implements Model{
 			if (node !== undefined) { // typescript cancer
 				done.push(node)
 				for (const adjustedNode of this.adjustedNodes(node)) {
-					if (playerGoal.find(goal => goal.x === adjustedNode.x && goal.y === adjustedNode.y)) {
+					if (playerGoal.find(goal => areCellsEqual(goal, adjustedNode))) {
 						return true
 					}
-					if (done.find(doneNode => (doneNode.x === adjustedNode.x && doneNode.y === adjustedNode.y)) === undefined &&
-						toDo.find(doneNode => (doneNode.x === adjustedNode.x && doneNode.y === adjustedNode.y)) === undefined) {
+					if (done.find(doneNode => areCellsEqual(doneNode, adjustedNode)) === undefined &&
+						toDo.find(doneNode => areCellsEqual(doneNode, adjustedNode)) === undefined) {
 						toDo.push(adjustedNode)
 					}
 				}
@@ -198,18 +216,19 @@ export default class Game implements Model{
 		return false
 	}
 
-	adjustedNodes(node: { x:number, y:number }): { x:number, y:number }[] {
+
+	adjustedNodes(node: Cell): Cell[] {
 		const nodes = []
-		if(this.gridEdges.has(this.getTopEdge(node.x, node.y))) {
+		if(this.checkTopEdge(node.x, node.y)) {
 			nodes.push({x: node.x, y: node.y - 1})
 		}
-		if(this.gridEdges.has(this.getLeftEdge(node.x, node.y))) {
+		if(this.checkLeftEdge(node.x, node.y)) {
 			nodes.push({x: node.x - 1, y: node.y})
 		}
-		if(this.gridEdges.has(this.getRightEdge(node.x, node.y))) {
+		if(this.checkRightEdge(node.x, node.y)) {
 			nodes.push({x: node.x + 1, y: node.y})
 		}
-		if(this.gridEdges.has(this.getBottomEdge(node.x, node.y))) {
+		if(this.checkBottomEdge(node.x, node.y)) {
 			nodes.push({x: node.x, y: node.y + 1})
 		}
 		return nodes
@@ -223,7 +242,7 @@ export default class Game implements Model{
 			const x = i % this.gridWidth
 			const y = (i - x) / this.gridWidth
 
-			// removing rightmost horizontal edges, as there newer will be existing
+			// removing rightmost horizontal edges, as they newer will exist
 			const isRedundantEdge = (y % 2 == 0) && (x == (this.gridWidth - 1))
 
 			if (!isRedundantEdge) {
@@ -243,85 +262,81 @@ export default class Game implements Model{
 		}
 	}
 
-	generatePossibleMoves(): Move[] {
+	possiblePlayerMoves(): Move[] {
 		const moveSet = []
-		const currentPlayer = this.getCurrentPlayer()
-		const nextPlayer = this.getNextPlayer()
+		const { position} = this.getCurrentPlayer()
+		const { position: nextPlayerPos} = this.getNextPlayer()
 
-		if (this.gridEdges.has(this.getTopEdge(currentPlayer.position.x, currentPlayer.position.y))) {
+		if (this.checkTopEdge(position.x, position.y)) {
 			// check if there is another player above
-			if (currentPlayer.position.x === nextPlayer.position.x && currentPlayer.position.y === (nextPlayer.position.y + 1)) {
-				if (this.gridEdges.has(this.getTopEdge(nextPlayer.position.x, nextPlayer.position.y))) {
+			if (position.x === nextPlayerPos.x && position.y === nextPlayerPos.y + 1) {
+				if (this.checkTopEdge(nextPlayerPos.x, nextPlayerPos.y)) {
 					// jump over other player
-					moveSet.push({newPosition: {x: currentPlayer.position.x, y: currentPlayer.position.y - 2}})
+					moveSet.push({newPosition: {x: position.x, y: position.y - 2}})
 				} else {
-					if (this.gridEdges.has(this.getLeftEdge(nextPlayer.position.x, nextPlayer.position.y))) {
+					if (this.gridEdges.has(this.getLeftEdge(nextPlayerPos.x, nextPlayerPos.y))) {
 						// jump left to the other player
-						moveSet.push({newPosition: {x: currentPlayer.position.x - 1, y: currentPlayer.position.y - 1}})
+						moveSet.push({newPosition: {x: position.x - 1, y: position.y - 1}})
 					}
-					if (this.gridEdges.has(this.getRightEdge(nextPlayer.position.x, nextPlayer.position.y))) {
+					if (this.gridEdges.has(this.getRightEdge(nextPlayerPos.x, nextPlayerPos.y))) {
 						// jump right to the other player
-						moveSet.push({newPosition: {x: currentPlayer.position.x + 1, y: currentPlayer.position.y - 1}})
+						moveSet.push({newPosition: {x: position.x + 1, y: position.y - 1}})
 					}
 				}
 			} else {
-				moveSet.push({newPosition: {x: currentPlayer.position.x, y: currentPlayer.position.y - 1}})
+				moveSet.push({newPosition: {x: position.x, y: position.y - 1}})
 			}
 		}
 
-		if (this.gridEdges.has(this.getRightEdge(currentPlayer.position.x, currentPlayer.position.y))) {
-			if (currentPlayer.position.x === (nextPlayer.position.x - 1) && currentPlayer.position.y === nextPlayer.position.y) {
-				if (this.gridEdges.has(this.getRightEdge(nextPlayer.position.x, nextPlayer.position.y))) {
-					moveSet.push({newPosition: {x: currentPlayer.position.x + 2, y: currentPlayer.position.y}})
+		if (this.checkRightEdge(position.x, position.y)) {
+			if (position.x === nextPlayerPos.x - 1 && position.y === nextPlayerPos.y) {
+				if (this.gridEdges.has(this.getRightEdge(nextPlayerPos.x, nextPlayerPos.y))) {
+					moveSet.push({newPosition: {x: position.x + 2, y: position.y}})
 				} else {
-					if (this.gridEdges.has(this.getTopEdge(nextPlayer.position.x, nextPlayer.position.y))) {
-						moveSet.push({newPosition: {x: currentPlayer.position.x + 1, y: currentPlayer.position.y - 1}})
+					if (this.gridEdges.has(this.getTopEdge(nextPlayerPos.x, nextPlayerPos.y))) {
+						moveSet.push({newPosition: {x: position.x + 1, y: position.y - 1}})
 					}
-					if (this.gridEdges.has(this.getBottomEdge(nextPlayer.position.x, nextPlayer.position.y))) {
-						moveSet.push({newPosition: {x: currentPlayer.position.x + 1, y: currentPlayer.position.y + 1}})
+					if (this.gridEdges.has(this.getBottomEdge(nextPlayerPos.x, nextPlayerPos.y))) {
+						moveSet.push({newPosition: {x: position.x + 1, y: position.y + 1}})
 					}
 				}
 			} else {
-				moveSet.push({newPosition: {x: currentPlayer.position.x + 1, y: currentPlayer.position.y}})
+				moveSet.push({newPosition: {x: position.x + 1, y: position.y}})
 			}
 		}
 
-		if (this.gridEdges.has(this.getLeftEdge(currentPlayer.position.x, currentPlayer.position.y))) {
-			if (currentPlayer.position.x === (nextPlayer.position.x + 1) && currentPlayer.position.y === nextPlayer.position.y) {
-				if (this.gridEdges.has(this.getLeftEdge(nextPlayer.position.x, nextPlayer.position.y))) {
-					moveSet.push({newPosition: {x: currentPlayer.position.x - 2, y: currentPlayer.position.y}})
+		if (this.checkLeftEdge(position.x, position.y)) {
+			if (position.x === nextPlayerPos.x + 1 && position.y === nextPlayerPos.y) {
+				if (this.gridEdges.has(this.getLeftEdge(nextPlayerPos.x, nextPlayerPos.y))) {
+					moveSet.push({newPosition: {x: position.x - 2, y: position.y}})
 				} else {
-					if (this.gridEdges.has(this.getTopEdge(nextPlayer.position.x, nextPlayer.position.y))) {
-						moveSet.push({newPosition: {x: currentPlayer.position.x - 1, y: currentPlayer.position.y - 1}})
+					if (this.gridEdges.has(this.getTopEdge(nextPlayerPos.x, nextPlayerPos.y))) {
+						moveSet.push({newPosition: {x: position.x - 1, y: position.y - 1}})
 					}
-					if (this.gridEdges.has(this.getBottomEdge(nextPlayer.position.x, nextPlayer.position.y))) {
-						moveSet.push({newPosition: {x: currentPlayer.position.x - 1, y: currentPlayer.position.y + 1}})
+					if (this.gridEdges.has(this.getBottomEdge(nextPlayerPos.x, nextPlayerPos.y))) {
+						moveSet.push({newPosition: {x: position.x - 1, y: position.y + 1}})
 					}
 				}
 			} else {
-				moveSet.push({newPosition: {x: currentPlayer.position.x - 1, y: currentPlayer.position.y}})
+				moveSet.push({newPosition: {x: position.x - 1, y: position.y}})
 			}
 		}
 
-		if (this.gridEdges.has(this.getBottomEdge(currentPlayer.position.x, currentPlayer.position.y))) {
-			if (currentPlayer.position.x === nextPlayer.position.x && currentPlayer.position.y === (nextPlayer.position.y - 1)) {
-				if (this.gridEdges.has(this.getBottomEdge(nextPlayer.position.x, nextPlayer.position.y))) {
-					moveSet.push({newPosition: {x: currentPlayer.position.x, y: currentPlayer.position.y + 2}})
+		if (this.checkBottomEdge(position.x, position.y)) {
+			if (position.x === nextPlayerPos.x && position.y === (nextPlayerPos.y - 1)) {
+				if (this.gridEdges.has(this.getBottomEdge(nextPlayerPos.x, nextPlayerPos.y))) {
+					moveSet.push({newPosition: {x: position.x, y: position.y + 2}})
 				} else {
-					if (this.gridEdges.has(this.getLeftEdge(nextPlayer.position.x, nextPlayer.position.y))) {
-						moveSet.push({newPosition: {x: currentPlayer.position.x - 1, y: currentPlayer.position.y + 1}})
+					if (this.gridEdges.has(this.getLeftEdge(nextPlayerPos.x, nextPlayerPos.y))) {
+						moveSet.push({newPosition: {x: position.x - 1, y: position.y + 1}})
 					}
-					if (this.gridEdges.has(this.getRightEdge(nextPlayer.position.x, nextPlayer.position.y))) {
-						moveSet.push({newPosition: {x: currentPlayer.position.x + 1, y: currentPlayer.position.y + 1}})
+					if (this.gridEdges.has(this.getRightEdge(nextPlayerPos.x, nextPlayerPos.y))) {
+						moveSet.push({newPosition: {x: position.x + 1, y: position.y + 1}})
 					}
 				}
 			} else {
-				moveSet.push({newPosition: {x: currentPlayer.position.x, y: currentPlayer.position.y + 1}})
+				moveSet.push({newPosition: {x: position.x, y: position.y + 1}})
 			}
-		}
-
-		if (currentPlayer.walls > 0) {
-			this.wallsAvailable.forEach(value => moveSet.push({position: value, removedWalls: []}))
 		}
 
 		return moveSet
