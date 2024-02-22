@@ -52,8 +52,9 @@ export default class Game implements Model{
 
 	executePlayerMove(move: MovePlayer): void {
 		const currentPlayer = this.getCurrentPlayer()
-		move.previousPosition = { ...currentPlayer.position }
-		currentPlayer.position = { ...move.newPosition }
+		move.previousPosition = { x: currentPlayer.position.x, y: currentPlayer.position.y}
+		currentPlayer.position.x = move.newPosition.x
+		currentPlayer.position.y = move.newPosition.y
 	}
 
 	executeWallMove(move: MoveWall): void {
@@ -75,7 +76,7 @@ export default class Game implements Model{
 
 		for (const player of this.players) {
 			winConditionsIsAccessible =
-				winConditionsIsAccessible && this.checkWinCondition({ ...player.position }, player.goal)
+				winConditionsIsAccessible && this.checkWinCondition(player.position, player.goal)
 		}
 
 		if (!winConditionsIsAccessible) {
@@ -123,7 +124,8 @@ export default class Game implements Model{
 
 			if (isPlayerMove(lastMove)) {
 				if (lastMove.previousPosition != null) { // typescript go brr
-					currentPlayer.position = { ...lastMove.previousPosition } // remove
+					currentPlayer.position.x = lastMove.previousPosition.x
+					currentPlayer.position.y = lastMove.previousPosition.y
 				}
 			} else {
 				const { x, y, orientation } = this.wallToString(lastMove.position)
