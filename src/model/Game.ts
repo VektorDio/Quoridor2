@@ -2,65 +2,54 @@ import Model from "./Model.ts";
 import {isPlayerMove, Move, MovePlayer, MoveWall} from "./Move.ts";
 import {Player} from "./Player.ts";
 import {areCellsEqual, Cell} from "./Cell.ts";
+import {Orientation, wallFromString, wallToString} from "./Wall.ts";
 
 export default class Game implements Model{
 	gridEdges = new Set<number>();
-	moveHistory: Move[] = [];
-	playerToMakeMove= 0; // counter mod amount of player
 	wallsAvailable = new Set<string>();
+	moveHistory: Move[] = [];
+	playerIndex= 0;
 	gridWidth = 9;
-	players= [
-		{
-			position: {x: 4, y: 0},
-			walls: 10,
-			goal: [
-				{x: 0, y: 8},
-				{x: 1, y: 8},
-				{x: 2, y: 8},
-				{x: 3, y: 8},
-				{x: 4, y: 8},
-				{x: 5, y: 8},
-				{x: 6, y: 8},
-				{x: 7, y: 8},
-				{x: 8, y: 8},
-			],
-			goalStr: new Set(["08", "18", "28", "38", "48", "58", "68", "78", "88"])
-		},
+	players: Player[] = [
 		{
 			position: {x: 4, y: 8},
 			walls: 10,
-			goal: [
-				{x: 0, y: 0},
-				{x: 1, y: 0},
-				{x: 2, y: 0},
-				{x: 3, y: 0},
-				{x: 4, y: 0},
-				{x: 5, y: 0},
-				{x: 6, y: 0},
-				{x: 7, y: 0},
-				{x: 8, y: 0},
-			],
-			goalStr: new Set(["00", "10", "20", "30", "40", "50", "60", "70", "80"])
+			goal: [{x: 0, y: 0},{x: 1, y: 0},{x: 2, y: 0},{x: 3, y: 0},{x: 4, y: 0},{x: 5, y: 0},{x: 6, y: 0},{x: 7, y: 0},{x: 8, y: 0}],
+			goalStr: new Set(["00","10","20","30","40","50","60","70",'80'])
+		},
+		{
+			position: {x: 4, y: 0},
+			walls: 10,
+			goal: [{x: 0, y: 8},{x: 1, y: 8},{x: 2, y: 8},{x: 3, y: 8},{x: 4, y: 8},{x: 5, y: 8},{x: 6, y: 8},{x: 7, y: 8},{x: 8, y: 8}],
+			goalStr: new Set(["08","18","28","38","48","58","68","78","88"])
 		}
-	];
+	]
+
+	constructor() {
+		this.initializeWalls()
+		this.initializeEdges()
+	}
 
 	executeMove(move: Move): void {
-		isPlayerMove(move) ? this.executePlayerMove(move) : this.executeWallMove(move)
+		if (isPlayerMove(move)) {
+			this.executePlayerMove(move)
+		} else {
+			this.executeWallMove(move)
+		}
 		this.moveHistory.push(move)
-		this.playerToMakeMove = this.playerToMakeMove === 0 ? 1 : 0
+		this.movePlayerIndex()
 	}
 
-	executePlayerMove(move: MovePlayer): void {
+	private executePlayerMove(move: MovePlayer): void {
 		const currentPlayer = this.getCurrentPlayer()
 		move.previousPosition = { x: currentPlayer.position.x, y: currentPlayer.position.y}
-		currentPlayer.position.x = move.newPosition.x
-		currentPlayer.position.y = move.newPosition.y
+		currentPlayer.position = { x: move.newPosition.x, y: move.newPosition.y }
 	}
 
-	executeWallMove(move: MoveWall): void {
-		const { x, y, orientation } = this.wallToString(move.position)
+	private executeWallMove(move: MoveWall): void {
+		const { position: { x, y}, orientation } = wallFromString(move.position)
 		let firstEdge, secondEdge
-		if (orientation === "h") {
+		if (orientation === Orientation.Horizontal) {
 			firstEdge = this.getBottomEdge(x, y)
 			secondEdge = this.getBottomEdge(x + 1, y)
 		} else {
@@ -75,31 +64,33 @@ export default class Game implements Model{
 		let winConditionsIsAccessible = true
 
 		for (const player of this.players) {
-			winConditionsIsAccessible =
-				winConditionsIsAccessible && this.checkWinCondition(player.position, player.goal)
+			if (!this.checkWinConditionStr(player.position, player.goalStr)) {
+				winConditionsIsAccessible = false
+				break
+			}
 		}
 
 		if (!winConditionsIsAccessible) {
 			this.gridEdges.add(firstEdge)
 			this.gridEdges.add(secondEdge)
 			console.log("Wall blocks someone`s path")
-			//throw new Error("Wall blocks someone`s path")
+			throw new Error("Wall blocks someone`s path")
 		}
 
 		const currentPlayer = this.getCurrentPlayer()
-		currentPlayer.walls-- // reducing player wall counter
+		currentPlayer.walls -= 1 // reducing player wall counter
 		this.wallsAvailable.delete(move.position)
 
 		let wall1, wall2, wall3
 
 		if (orientation === "h") {
-			wall1 = this.stringToWall((x + 1), y, "h")
-			wall2 = this.stringToWall((x - 1), y, "h")
-			wall3 = this.stringToWall(x, y, "v")
+			wall1 = wallToString({ position: { x: x + 1, y }, orientation: Orientation.Horizontal })
+			wall2 = wallToString({ position: { x: x - 1, y }, orientation: Orientation.Horizontal })
+			wall3 = wallToString({ position: { x, y }, orientation: Orientation.Vertical })
 		} else {
-			wall1 = this.stringToWall(x, (y + 1), "v")
-			wall2 = this.stringToWall(x, (y - 1), "v")
-			wall3 = this.stringToWall(x, y, "h")
+			wall1 = wallToString({ position: { x, y: y + 1 }, orientation: Orientation.Vertical })
+			wall2 = wallToString({ position: { x, y: y - 1 }, orientation: Orientation.Vertical })
+			wall3 = wallToString({ position: { x, y }, orientation: Orientation.Horizontal })
 		}
 
 		if (this.wallsAvailable.has(wall1)) {
@@ -119,7 +110,7 @@ export default class Game implements Model{
 	undoLastMove(): void {
 		const lastMove = this.moveHistory.pop()
 		if (lastMove !== undefined) {
-			this.playerToMakeMove = this.playerToMakeMove === 0 ? 1 : 0
+			this.movePlayerIndex() // moving turn back
 			const currentPlayer = this.getCurrentPlayer()
 
 			if (isPlayerMove(lastMove)) {
@@ -128,12 +119,12 @@ export default class Game implements Model{
 					currentPlayer.position.y = lastMove.previousPosition.y
 				}
 			} else {
-				const { x, y, orientation } = this.wallToString(lastMove.position)
+				const { position: { x, y }, orientation } = wallFromString(lastMove.position)
 				// restore available moves
 				lastMove.removedWalls.forEach(e => this.wallsAvailable.add(e))
 
 				let firstEdge, secondEdge
-				if (orientation === "h") {
+				if (orientation === Orientation.Horizontal) {
 					firstEdge = this.getBottomEdge(x, y)
 					secondEdge = this.getBottomEdge(x + 1, y)
 				} else {
@@ -149,52 +140,47 @@ export default class Game implements Model{
 	}
 
 	getCurrentPlayer(): Player{
-		return this.players[this.playerToMakeMove]
+		return this.players[this.playerIndex]
 	}
 
-	getNextPlayer(): Player {
-		return this.playerToMakeMove === 0 ? this.players[1] : this.players[0]
+	private getOtherPlayer(): Player {
+		return this.playerIndex === 0 ? this.players[1] : this.players[0]
 	}
 
-	wallToString(wallPosition: string): {x: number, y: number, orientation: string} {
-		const decodedPosition = wallPosition.split("")
-		return {x: parseInt(decodedPosition[0]), y: parseInt(decodedPosition[1]), orientation: decodedPosition[2]}
+	private movePlayerIndex(): void {
+		this.playerIndex = this.playerIndex === 0 ? 1 : 0
 	}
 
-	stringToWall(x: number, y: number, orientation: string): string {
-		return "".concat(String(x), String(y), orientation)
-	}
-
-	getLeftEdge(nodeX: number, nodeY: number): number {
+	private getLeftEdge(nodeX: number, nodeY: number): number {
 		if (nodeX <= 0) return -1 // left edge can generate negative numbers
 		return (nodeX - 1) + (nodeY * 2 * this.gridWidth)
 	}
 
-	getRightEdge(nodeX: number, nodeY: number): number {
+	private getRightEdge(nodeX: number, nodeY: number): number {
 		return (nodeX) + (nodeY * 2 * this.gridWidth)
 	}
 
-	getTopEdge(nodeX: number, nodeY: number): number {
+	private getTopEdge(nodeX: number, nodeY: number): number {
 		return (nodeX) + ((nodeY * 2 - 1) * this.gridWidth)
 	}
 
-	getBottomEdge(nodeX: number, nodeY: number): number {
+	private getBottomEdge(nodeX: number, nodeY: number): number {
 		return (nodeX) + ((nodeY * 2 + 1) * this.gridWidth)
 	}
 
-	checkLeftEdge(nodeX: number, nodeY: number): boolean {
+	private checkLeftEdge(nodeX: number, nodeY: number): boolean {
 		return this.gridEdges.has(this.getLeftEdge(nodeX, nodeY))
 	}
 
-	checkRightEdge(nodeX: number, nodeY: number): boolean {
+	private checkRightEdge(nodeX: number, nodeY: number): boolean {
 		return this.gridEdges.has(this.getRightEdge(nodeX, nodeY))
 	}
 
-	checkTopEdge(nodeX: number, nodeY: number): boolean {
+	private checkTopEdge(nodeX: number, nodeY: number): boolean {
 		return this.gridEdges.has(this.getTopEdge(nodeX, nodeY))
 	}
 
-	checkBottomEdge(nodeX: number, nodeY: number): boolean {
+	private checkBottomEdge(nodeX: number, nodeY: number): boolean {
 		return this.gridEdges.has(this.getBottomEdge(nodeX, nodeY))
 	}
 
@@ -220,7 +206,7 @@ export default class Game implements Model{
 		return false
 	}
 
-	adjustedNodes(node: Cell): Cell[] {
+	private adjustedNodes(node: Cell): Cell[] {
 		const nodes = []
 		if(this.checkTopEdge(node.x, node.y)) {
 			nodes.push({x: node.x, y: node.y - 1})
@@ -238,27 +224,31 @@ export default class Game implements Model{
 	}
 
 	checkWinConditionStr(playerNode: Cell, playerGoal: Set<string>): boolean {
-		const toDo:Set<string> = new Set()
-		const done:Set<string> = new Set()
-		toDo.add(playerNode.x + "" + playerNode.y)
+		const toDoSet:Set<string> = new Set()
+		const doneSet:Set<string> = new Set()
+		toDoSet.add(playerNode.x + "" + playerNode.y)
 
-		while (toDo.size > 0) {
-			const node = toDo.values().next().value
-			toDo.delete(node)
-			done.add(node)
-			for (const adjustedNode of this.adjustedNodesStr(node)) {
-				if (playerGoal.has(adjustedNode)) {
-					return true
-				}
-				if (!done.has(adjustedNode) && !toDo.has(adjustedNode)) {
-					toDo.add(adjustedNode)
+		while (toDoSet.size > 0) {
+			//const node = toDoSet.values().next().value
+			const node = [...toDoSet].pop()
+
+			if (node !== undefined) {
+				toDoSet.delete(node)
+				doneSet.add(node)
+				for (const adjustedNode of this.adjustedNodesStr(node)) {
+					if (playerGoal.has(adjustedNode)) {
+						return true
+					}
+					if (!doneSet.has(adjustedNode)) {
+						toDoSet.add(adjustedNode)
+					}
 				}
 			}
 		}
 		return false
 	}
 
-	adjustedNodesStr(node: string): string[] {
+	private adjustedNodesStr(node: string): string[] {
 		const nodes = []
 		const x = parseInt(node[0])
 		const y = parseInt(node[1])
@@ -278,7 +268,7 @@ export default class Game implements Model{
 		return nodes
 	}
 
-	initializeEdges(): void {
+	private initializeEdges(): void {
 		// actually, its (width * (width - 1)) * 2, but we need this to make it square
 		const amountOfEdges = (this.gridWidth * this.gridWidth) + (this.gridWidth * (this.gridWidth - 1))
 		// generating edges as linear sequence
@@ -295,7 +285,7 @@ export default class Game implements Model{
 		}
 	}
 
-	initializeWalls(): void {
+	private initializeWalls(): void {
 		for (let i = 0; i < this.gridWidth - 1; i++) {
 			for (let j = 0; j < this.gridWidth - 1; j++){
 				const wallH = "".concat(String(i), String(j), "h")
@@ -309,7 +299,7 @@ export default class Game implements Model{
 	possiblePlayerMoves(): Move[] {
 		const moveSet = []
 		const { position} = this.getCurrentPlayer()
-		const { position: nextPlayerPos} = this.getNextPlayer()
+		const { position: nextPlayerPos} = this.getOtherPlayer()
 
 		if (this.checkTopEdge(position.x, position.y)) {
 			// check if there is another player above
@@ -318,11 +308,11 @@ export default class Game implements Model{
 					// jump over other player
 					moveSet.push({newPosition: {x: position.x, y: position.y - 2}})
 				} else {
-					if (this.gridEdges.has(this.getLeftEdge(nextPlayerPos.x, nextPlayerPos.y))) {
+					if (this.checkLeftEdge(nextPlayerPos.x, nextPlayerPos.y)) {
 						// jump left to the other player
 						moveSet.push({newPosition: {x: position.x - 1, y: position.y - 1}})
 					}
-					if (this.gridEdges.has(this.getRightEdge(nextPlayerPos.x, nextPlayerPos.y))) {
+					if (this.checkRightEdge(nextPlayerPos.x, nextPlayerPos.y)) {
 						// jump right to the other player
 						moveSet.push({newPosition: {x: position.x + 1, y: position.y - 1}})
 					}
@@ -334,13 +324,13 @@ export default class Game implements Model{
 
 		if (this.checkRightEdge(position.x, position.y)) {
 			if (position.x === nextPlayerPos.x - 1 && position.y === nextPlayerPos.y) {
-				if (this.gridEdges.has(this.getRightEdge(nextPlayerPos.x, nextPlayerPos.y))) {
+				if (this.checkRightEdge(nextPlayerPos.x, nextPlayerPos.y)) {
 					moveSet.push({newPosition: {x: position.x + 2, y: position.y}})
 				} else {
-					if (this.gridEdges.has(this.getTopEdge(nextPlayerPos.x, nextPlayerPos.y))) {
+					if (this.checkTopEdge(nextPlayerPos.x, nextPlayerPos.y)) {
 						moveSet.push({newPosition: {x: position.x + 1, y: position.y - 1}})
 					}
-					if (this.gridEdges.has(this.getBottomEdge(nextPlayerPos.x, nextPlayerPos.y))) {
+					if (this.checkBottomEdge(nextPlayerPos.x, nextPlayerPos.y)) {
 						moveSet.push({newPosition: {x: position.x + 1, y: position.y + 1}})
 					}
 				}
@@ -351,13 +341,13 @@ export default class Game implements Model{
 
 		if (this.checkLeftEdge(position.x, position.y)) {
 			if (position.x === nextPlayerPos.x + 1 && position.y === nextPlayerPos.y) {
-				if (this.gridEdges.has(this.getLeftEdge(nextPlayerPos.x, nextPlayerPos.y))) {
+				if (this.checkLeftEdge(nextPlayerPos.x, nextPlayerPos.y)) {
 					moveSet.push({newPosition: {x: position.x - 2, y: position.y}})
 				} else {
-					if (this.gridEdges.has(this.getTopEdge(nextPlayerPos.x, nextPlayerPos.y))) {
+					if (this.checkTopEdge(nextPlayerPos.x, nextPlayerPos.y)) {
 						moveSet.push({newPosition: {x: position.x - 1, y: position.y - 1}})
 					}
-					if (this.gridEdges.has(this.getBottomEdge(nextPlayerPos.x, nextPlayerPos.y))) {
+					if (this.checkBottomEdge(nextPlayerPos.x, nextPlayerPos.y)) {
 						moveSet.push({newPosition: {x: position.x - 1, y: position.y + 1}})
 					}
 				}
@@ -368,13 +358,13 @@ export default class Game implements Model{
 
 		if (this.checkBottomEdge(position.x, position.y)) {
 			if (position.x === nextPlayerPos.x && position.y === (nextPlayerPos.y - 1)) {
-				if (this.gridEdges.has(this.getBottomEdge(nextPlayerPos.x, nextPlayerPos.y))) {
+				if (this.checkBottomEdge(nextPlayerPos.x, nextPlayerPos.y)) {
 					moveSet.push({newPosition: {x: position.x, y: position.y + 2}})
 				} else {
-					if (this.gridEdges.has(this.getLeftEdge(nextPlayerPos.x, nextPlayerPos.y))) {
+					if (this.checkLeftEdge(nextPlayerPos.x, nextPlayerPos.y)) {
 						moveSet.push({newPosition: {x: position.x - 1, y: position.y + 1}})
 					}
-					if (this.gridEdges.has(this.getRightEdge(nextPlayerPos.x, nextPlayerPos.y))) {
+					if (this.checkRightEdge(nextPlayerPos.x, nextPlayerPos.y)) {
 						moveSet.push({newPosition: {x: position.x + 1, y: position.y + 1}})
 					}
 				}

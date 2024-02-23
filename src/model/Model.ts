@@ -3,7 +3,7 @@ import { Player } from "./Player.ts";
 
 export default interface Model {
     players: Player[];
-    playerToMakeMove: number;
+    playerIndex: number;
     wallsAvailable: Set<string>;
     gridEdges: Set<number>;
     gridWidth: number;

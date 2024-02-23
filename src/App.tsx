@@ -8,8 +8,6 @@ function App() {
 	const [count, setCount] = useState(0)
 
 	const game = new Game()
-	game.initializeEdges()
-	game.initializeWalls()
 
 	//console.log(game)
 	// try {
@@ -22,16 +20,14 @@ function App() {
 	//game.executeMove({newX: 4, newY: 0})
 	//game.executeMove({newX: 4, newY: 1})
 	//game.executeMove({newX: 4, newY: 1})
-	//game.executeMove({position: "30v", removedWalls: []})
-	//game.executeMove({position: "40v", removedWalls: []})
+	game.executeMove({position: "37v", removedWalls: []})
+	game.executeMove({position: "47h", removedWalls: []})
 	//game.executeMove({position: "41h", removedWalls: []})
 	// console.log(game.showGameState())
 	// game.undoLastMove()
-	//console.log(game.showGameState())
+	console.log(game.showGameState())
 	//console.log(game)
-	//console.log(game.generatePossibleMoves())
-
-	//console.log(`Call took ${endTime - startTime} milliseconds`)
+	console.log(game.possiblePlayerMoves())
 
 	return (
 		<>
