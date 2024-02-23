@@ -12,16 +12,26 @@ function App() {
 	game.initializeWalls()
 
 	//console.log(game)
-	//game.executeMove({position: "31h", removedWalls: []})
+	// try {
+	// 	game.executeMove({position: "31h", removedWalls: []})
+	// } catch (e) {
+	// 	// @ts-ignore
+	// 	console.log(e.message)
+	// }
+
 	//game.executeMove({newX: 4, newY: 0})
 	//game.executeMove({newX: 4, newY: 1})
-	//game.executeMove({position: "41v", removedWalls: []})
+	//game.executeMove({newX: 4, newY: 1})
+	//game.executeMove({position: "30v", removedWalls: []})
+	//game.executeMove({position: "40v", removedWalls: []})
+	//game.executeMove({position: "41h", removedWalls: []})
 	// console.log(game.showGameState())
 	// game.undoLastMove()
 	//console.log(game.showGameState())
 	//console.log(game)
+	//console.log(game.generatePossibleMoves())
 
-	console.log(game.generatePossibleMoves())
+	//console.log(`Call took ${endTime - startTime} milliseconds`)
 
 	return (
 		<>
