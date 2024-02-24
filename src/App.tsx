@@ -1,61 +1,37 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 import Game from "./model/Game.ts";
+import Board from './components/Board';
+import React, { createContext, useEffect, useReducer } from 'react';
+import { reducer } from './reducer';
+import Model from './model/Model.ts';
+import { Action } from './reducer/type';
+
+export interface Context {
+	state: Model,
+	dispatch: React.Dispatch<Action>
+}
+
+const game = new Game()
+
+export const GameContext = createContext<Context>({
+	state: {} as Model,
+	dispatch: () => {}
+})
 
 function App() {
-	const [count, setCount] = useState(0)
+	const [state, dispatch] = useReducer(reducer, game)
 
-	const game = new Game()
-	game.initializeEdges()
-	game.initializeWalls()
-
-	//console.log(game)
-	// try {
-	// 	game.executeMove({position: "31h", removedWalls: []})
-	// } catch (e) {
-	// 	// @ts-ignore
-	// 	console.log(e.message)
-	// }
-
-	//game.executeMove({newX: 4, newY: 0})
-	//game.executeMove({newX: 4, newY: 1})
-	//game.executeMove({newX: 4, newY: 1})
-	//game.executeMove({position: "30v", removedWalls: []})
-	//game.executeMove({position: "40v", removedWalls: []})
-	//game.executeMove({position: "41h", removedWalls: []})
-	// console.log(game.showGameState())
-	// game.undoLastMove()
-	//console.log(game.showGameState())
-	//console.log(game)
-	//console.log(game.generatePossibleMoves())
-
-	//console.log(`Call took ${endTime - startTime} milliseconds`)
+	useEffect(() => {
+		const currentPlayer = state.getCurrentPlayer()
+		dispatch({ type: 'MOVE_PLAYER', value: {  newPosition: {x: 5, y: 5}, previousPosition: currentPlayer.position }})
+	}, [])
 
 	return (
-		<>
-			<div>
-				<a href="https://vitejs.dev" target="_blank">
-					<img src={viteLogo} className="logo" alt="Vite logo" />
-				</a>
-				<a href="https://react.dev" target="_blank">
-					<img src={reactLogo} className="logo react" alt="React logo" />
-				</a>
+		<GameContext.Provider value={{ state, dispatch }}>
+			<div className='flex justify-center items-center'>
+				<Board board={Array(state.gridWidth).fill(Array(state.gridWidth).fill('0'))}></Board>
 			</div>
-			<h1>Vite + React</h1>
-			<div className="card">
-				<button onClick={() => setCount(prev => prev + 1)}>
-          count is {count}
-				</button>
-				<p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-				</p>
-			</div>
-			<p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-			</p>
-		</>
+		</GameContext.Provider>
 	)
 }
 
