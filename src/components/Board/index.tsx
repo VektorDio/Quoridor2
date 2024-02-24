@@ -15,7 +15,6 @@ const Board: React.FC<IBoard> = ({ board }) => {
 			return player.position.x === x && player.position.y === y;
 		}).length)
 
-		state.players[0].position
 		return <Cell key={`${x}-${y}`} x={y} y={x} isOccupied={isOccupied} ></Cell>
 	}
 
