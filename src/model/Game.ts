@@ -31,6 +31,7 @@ export default class Game implements Model{
 	}
 
 	executeMove(move: Move): void {
+		// move will be mutated after execution
 		if (isPlayerMove(move)) {
 			this.executePlayerMove(move)
 		} else {
@@ -42,6 +43,7 @@ export default class Game implements Model{
 
 	private executePlayerMove(move: MovePlayer): void {
 		const currentPlayer = this.getCurrentPlayer()
+		// mutating is a bad practise, but here we omit it for the sake of performance, as this method will be called a lot
 		move.previousPosition = { x: currentPlayer.position.x, y: currentPlayer.position.y}
 		currentPlayer.position = { x: move.newPosition.x, y: move.newPosition.y }
 	}
@@ -93,6 +95,7 @@ export default class Game implements Model{
 			wall3 = wallToString({ position: { x, y }, orientation: Orientation.Horizontal })
 		}
 
+		// mutating variable again
 		if (this.wallsAvailable.has(wall1)) {
 			this.wallsAvailable.delete(wall1)
 			move.removedWalls.push(wall1)
@@ -114,7 +117,7 @@ export default class Game implements Model{
 			const currentPlayer = this.getCurrentPlayer()
 
 			if (isPlayerMove(lastMove)) {
-				if (lastMove.previousPosition != null) { // typescript go brr
+				if (lastMove.previousPosition != null) {
 					currentPlayer.position.x = lastMove.previousPosition.x
 					currentPlayer.position.y = lastMove.previousPosition.y
 				}
@@ -152,7 +155,7 @@ export default class Game implements Model{
 	}
 
 	private getLeftEdge(nodeX: number, nodeY: number): number {
-		if (nodeX <= 0) return -1 // left edge can generate negative numbers
+		if (nodeX <= 0) return -1 // left edge can generate negative numbers, so we need to check
 		return (nodeX - 1) + (nodeY * 2 * this.gridWidth)
 	}
 
@@ -185,12 +188,13 @@ export default class Game implements Model{
 	}
 
 	checkWinCondition(playerNode: Cell, playerGoal: Cell[]): boolean {
+		// adding starting player position
 		const toDo: Cell[] = [{x: playerNode.x, y:playerNode.y}]
 		const done: Cell[] = []
 
 		while (toDo.length > 0) {
 			const node = toDo.pop()
-			if (node !== undefined) { // typescript cancer
+			if (node !== undefined) { // node can't be undefined, but precompiler don't know this
 				done.push(node)
 				for (const adjustedNode of this.adjustedNodes(node)) {
 					if (playerGoal.find(goal => areCellsEqual(goal, adjustedNode))) {
@@ -232,14 +236,14 @@ export default class Game implements Model{
 			//const node = toDoSet.values().next().value
 			const node = [...toDoSet].pop()
 
-			if (node !== undefined) {
+			if (node !== undefined) { // node can't be undefined, but precompiler don't know this
 				toDoSet.delete(node)
 				doneSet.add(node)
 				for (const adjustedNode of this.adjustedNodesStr(node)) {
 					if (playerGoal.has(adjustedNode)) {
 						return true
 					}
-					if (!doneSet.has(adjustedNode)) {
+					if (!doneSet.has(adjustedNode)) { // here we don't need duplicate check, as we're using set
 						toDoSet.add(adjustedNode)
 					}
 				}
@@ -254,6 +258,7 @@ export default class Game implements Model{
 		const y = parseInt(node[1])
 
 		if(this.checkTopEdge(x, y)) {
+			// this is not very readable, but should be one of the fastest way to convert int to string
 			nodes.push(x + "" + (y - 1))
 		}
 		if(this.checkLeftEdge(x, y)) {
@@ -276,7 +281,7 @@ export default class Game implements Model{
 			const x = i % this.gridWidth
 			const y = (i - x) / this.gridWidth
 
-			// removing rightmost horizontal edges, as they newer will exist
+			// removing rightmost horizontal edges, as they will newer exist
 			const isRedundantEdge = (y % 2 == 0) && (x == (this.gridWidth - 1))
 
 			if (!isRedundantEdge) {
@@ -288,6 +293,7 @@ export default class Game implements Model{
 	private initializeWalls(): void {
 		for (let i = 0; i < this.gridWidth - 1; i++) {
 			for (let j = 0; j < this.gridWidth - 1; j++){
+				// we have wall to string conversion, but here we're using this to avoid object creation
 				const wallH = "".concat(String(i), String(j), "h")
 				const wallV = "".concat(String(i), String(j), "v")
 				this.wallsAvailable.add(wallV)
@@ -298,6 +304,7 @@ export default class Game implements Model{
 
 	possiblePlayerMoves(): Move[] {
 		const moveSet = []
+		// getting players positions
 		const { position} = this.getCurrentPlayer()
 		const { position: nextPlayerPos} = this.getOtherPlayer()
 
@@ -318,6 +325,7 @@ export default class Game implements Model{
 					}
 				}
 			} else {
+				// moving one cell forward
 				moveSet.push({newPosition: {x: position.x, y: position.y - 1}})
 			}
 		}
@@ -377,8 +385,9 @@ export default class Game implements Model{
 	}
 
 	showGameState() {
-		const stateSize = this.gridWidth * 2 - 1
-		const state = new Array(stateSize).fill(0).map(() => new Array(stateSize).fill("0")) // i love js
+		const stateSize = this.gridWidth * 2 - 1 // or rather, state width, that's why we do -1
+		// it's really hard to initialize 2d array in js
+		const state = new Array(stateSize).fill(0).map(() => new Array(stateSize).fill("0"))
 
 		for (let i = 0; i < this.gridWidth; i++) {
 			for (let j = 0; j < this.gridWidth; j++) {
