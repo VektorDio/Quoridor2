@@ -1,41 +1,44 @@
-export default class MinHeap {
-	heap: number[] = [];
+import Node from "./Node.ts";
 
-	// Helper Methods
-	getLeftChildIndex(parentIndex: number) {
+export default class NodeHeap {
+	heap: Node[] = [];
+
+	// helper functions
+	private getLeftChildIndex(parentIndex: number) {
 		return 2 * parentIndex + 1;
 	}
-	getRightChildIndex(parentIndex: number) {
+	private getRightChildIndex(parentIndex: number) {
 		return 2 * parentIndex + 2;
 	}
-	getParentIndex(childIndex: number) {
+	private getParentIndex(childIndex: number) {
 		return Math.floor((childIndex - 1) / 2);
 	}
-	hasLeftChild(index: number) {
+	private hasLeftChild(index: number) {
 		return this.getLeftChildIndex(index) < this.heap.length;
 	}
-	hasRightChild(index: number) {
+	private hasRightChild(index: number) {
 		return this.getRightChildIndex(index) < this.heap.length;
 	}
-	hasParent(index: number) {
+	private hasParent(index: number) {
 		return this.getParentIndex(index) >= 0;
 	}
-	leftChild(index: number) {
-		return this.heap[this.getLeftChildIndex(index)];
+	private getLeftChildValue(index: number) {
+		return this.heap[this.getLeftChildIndex(index)].f;
 	}
-	rightChild(index: number) {
-		return this.heap[this.getRightChildIndex(index)];
+	private getRightChildValue(index: number) {
+		return this.heap[this.getRightChildIndex(index)].f;
 	}
-	parent(index: number) {
-		return this.heap[this.getParentIndex(index)];
+	private getParentValue(index: number) {
+		return this.heap[this.getParentIndex(index)].f;
 	}
 
-	// Functions to create Min Heap
+	// Functions to operate Min Heap
 
 	swap(indexOne: number, indexTwo: number) {
-		const temp = this.heap[indexOne];
-		this.heap[indexOne] = this.heap[indexTwo];
-		this.heap[indexTwo] = temp;
+		// const temp = this.heap[indexOne];
+		// this.heap[indexOne] = this.heap[indexTwo];
+		// this.heap[indexTwo] = temp;
+		[this.heap[indexOne], this.heap[indexTwo]] = [this.heap[indexTwo], this.heap[indexOne]]
 	}
 
 	peek() {
@@ -53,34 +56,34 @@ export default class MinHeap {
 			return null;
 		}
 		// eslint-disable-next-line prefer-destructuring
-		const item: number = this.heap[0];
+		const item = this.heap[0];
 		this.heap[0] = this.heap[this.heap.length - 1];
 		this.heap.pop();
 		this.heapifyDown();
 		return item;
 	}
 
-	add(item: number) {
+	add(item: Node) {
 		this.heap.push(item);
 		this.heapifyUp();
 	}
 
-	heapifyUp() {
+	private heapifyUp() {
 		let index = this.heap.length - 1;
-		while (this.hasParent(index) && this.parent(index) > this.heap[index]) {
+		while (this.hasParent(index) && this.getParentValue(index) > this.heap[index].f) {
 			this.swap(this.getParentIndex(index), index);
 			index = this.getParentIndex(index);
 		}
 	}
 
-	heapifyDown() {
+	private heapifyDown() {
 		let index = 0;
 		while (this.hasLeftChild(index)) {
 			let smallerChildIndex = this.getLeftChildIndex(index);
-			if (this.hasRightChild(index) && this.rightChild(index) < this.leftChild(index)) {
+			if (this.hasRightChild(index) && this.getRightChildValue(index) < this.getLeftChildValue(index)) {
 				smallerChildIndex = this.getRightChildIndex(index);
 			}
-			if (this.heap[index] < this.heap[smallerChildIndex]) {
+			if (this.heap[index].f < this.heap[smallerChildIndex].f) {
 				break;
 			} else {
 				this.swap(index, smallerChildIndex);
@@ -90,10 +93,6 @@ export default class MinHeap {
 	}
 
 	printHeap() {
-		let heap =` ${this.heap[0]} `
-		for(let i = 1; i < this.heap.length; i++) {
-			heap += ` ${this.heap[i]} `;
-		}
-		console.log(heap);
+		console.log(this.heap.map(value => "x:" + value.x + " y:" + value.y));
 	}
 }
