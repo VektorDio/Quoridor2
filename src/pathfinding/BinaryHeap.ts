@@ -68,6 +68,14 @@ export default class NodeHeap {
 		this.heapifyUp();
 	}
 
+	getSize() {
+		return this.heap.length
+	}
+
+	rescoreElement(node: Node) {
+		this.heapifyDown(this.heap.indexOf(node))
+	}
+
 	private heapifyUp() {
 		let index = this.heap.length - 1;
 		while (this.hasParent(index) && this.getParentValue(index) > this.heap[index].f) {
@@ -76,8 +84,8 @@ export default class NodeHeap {
 		}
 	}
 
-	private heapifyDown() {
-		let index = 0;
+	private heapifyDown(startIndex: number = 0) {
+		let index = startIndex;
 		while (this.hasLeftChild(index)) {
 			let smallerChildIndex = this.getLeftChildIndex(index);
 			if (this.hasRightChild(index) && this.getRightChildValue(index) < this.getLeftChildValue(index)) {

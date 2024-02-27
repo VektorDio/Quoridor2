@@ -171,19 +171,19 @@ export default class Game implements Model{
 		return (nodeX) + ((nodeY * 2 + 1) * this.gridWidth)
 	}
 
-	private checkLeftEdge(nodeX: number, nodeY: number): boolean {
+	checkLeftEdge(nodeX: number, nodeY: number): boolean {
 		return this.gridEdges.has(this.getLeftEdge(nodeX, nodeY))
 	}
 
-	private checkRightEdge(nodeX: number, nodeY: number): boolean {
+	checkRightEdge(nodeX: number, nodeY: number): boolean {
 		return this.gridEdges.has(this.getRightEdge(nodeX, nodeY))
 	}
 
-	private checkTopEdge(nodeX: number, nodeY: number): boolean {
+	checkTopEdge(nodeX: number, nodeY: number): boolean {
 		return this.gridEdges.has(this.getTopEdge(nodeX, nodeY))
 	}
 
-	private checkBottomEdge(nodeX: number, nodeY: number): boolean {
+	checkBottomEdge(nodeX: number, nodeY: number): boolean {
 		return this.gridEdges.has(this.getBottomEdge(nodeX, nodeY))
 	}
 
