@@ -1,6 +1,7 @@
 export default class Node {
 	x: number
 	y: number
+
 	f: number
 	g: number
 	h: number
@@ -11,6 +12,7 @@ export default class Node {
 	constructor(x: number, y: number, g?: number, h?: number, visited?: boolean, closed?: boolean) {
 		this.x = x;
 		this.y = y;
+
 		this.g = g || 0;
 		this.h = h || 0;
 		this.f = 0

@@ -26,8 +26,10 @@ function App() {
 	// console.log(game.showGameState())
 	// console.log(game)
 	// console.log(game.possiblePlayerMoves())
-
-	console.log(aStar({x:0,y:0}, {x:8,y:8}, game))
+	const startTime = performance.now()
+	aStar({x:0,y:0}, {x:8,y:8}, game)
+	const endTime = performance.now()
+	console.log(`Call took ${endTime - startTime} milliseconds`)
 
 	return (
 		<>

@@ -72,6 +72,10 @@ export default class NodeHeap {
 		return this.heap.length
 	}
 
+	find(predicate: (value: Node, index: number, obj: Node[]) => unknown) {
+		return this.heap.find(predicate)
+	}
+
 	rescoreElement(node: Node) {
 		this.heapifyDown(this.heap.indexOf(node))
 	}
