@@ -1,23 +1,16 @@
 export default class Node {
 	x: number
 	y: number
-
-	f: number
-	g: number
-	h: number
-	visited: boolean
-	closed: boolean
-	parent: Node | null
     
-	constructor(x: number, y: number, g?: number, h?: number, visited?: boolean, closed?: boolean) {
+	constructor(x: number, y: number,
+				public g = 0,
+				public h = 0,
+				public f = 0,
+				public visited= false,
+				public closed = false,
+				public parent: Node | null = null
+	) {
 		this.x = x;
 		this.y = y;
-
-		this.g = g || 0;
-		this.h = h || 0;
-		this.f = 0
-		this.visited = visited || false
-		this.closed = closed || false
-		this.parent = null
 	}
 }
