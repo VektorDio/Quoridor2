@@ -92,23 +92,37 @@ function octileDistance(dx: number, dy: number) {
 function jump(x: number, y: number, px: number, py: number, grid: Node[][], game: Game, endNode: Cell) {
 	const dx = x - px, dy = y - py;
 
-	if (!grid[y] || !grid[y][x]) return null // crutch
+	if (!grid[y] || !grid[y][x]) return null
 
-	if (grid[y][x].x === endNode.x && grid[y][x].y === endNode.y) {
+	if (x === endNode.x && y === endNode.y) {
 		return [x, y];
 	}
 
-	// probably wrong, missing other directions in second check
 	if (dx !== 0) {
-		if ((game.checkTopEdge(x, y) && !(game.checkTopEdge(x, y) && game.checkRightEdge(x, y))) ||
-			(game.checkBottomEdge(x, y) && !(game.checkBottomEdge(x, y) && game.checkRightEdge(x, y)))) {
-			return [x, y];
+		if (dx === 1) {
+			if ((game.checkTopEdge(x, y) && !(game.checkRightEdge(x - dx, y - 1))) ||
+				(game.checkBottomEdge(x, y) && !(game.checkRightEdge(x - dx, y + 1)))) {
+				return [x, y];
+			}
+		} else {
+			if ((game.checkTopEdge(x, y) && !(game.checkLeftEdge(x - dx, y - 1))) ||
+				(game.checkBottomEdge(x, y) && !(game.checkLeftEdge(x - dx, y + 1)))) {
+				return [x, y];
+			}
 		}
 	} else if (dy !== 0) {
-		if ((game.checkLeftEdge(x, y) && !(game.checkLeftEdge(x, y) && game.checkTopEdge(x, y))) ||
-			(game.checkRightEdge(x, y) && !(game.checkRightEdge(x, y) && game.checkTopEdge(x, y)))) {
-			return [x, y];
+		if (dy === 1) {
+			if ((game.checkLeftEdge(x, y) && !(game.checkBottomEdge(x - 1, y - dy))) ||
+				(game.checkRightEdge(x, y) && !(game.checkBottomEdge(x + 1, y - dy)))) {
+				return [x, y];
+			}
+		} else {
+			if ((game.checkLeftEdge(x, y) && !(game.checkTopEdge(x - 1, y - dy))) ||
+				(game.checkRightEdge(x, y) && !(game.checkTopEdge(x + 1, y - dy)))) {
+				return [x, y];
+			}
 		}
+
 		//When moving vertically, must check for horizontal jump points
 		if ((game.checkRightEdge(x, y) && jump(x + 1, y, x, y, grid, game, endNode)) ||
 			(game.checkLeftEdge(x, y) && jump(x - 1, y, x, y, grid, game, endNode))) {
@@ -141,18 +155,21 @@ function findNeighbours(node: Node, game:  Game, grid: Node[][]) {
 			if (game.checkBottomEdge(x, y)) {
 				neighbors.push([x, y + 1]);
 			}
-			if (game.checkRightEdge(x, y)) {
+			if (dx === 1 && game.checkRightEdge(x, y)) {
+				neighbors.push([x + dx, y]);
+			} else if (dx === -1 && game.checkLeftEdge(x, y)) {
 				neighbors.push([x + dx, y]);
 			}
-		}
-		else if (dy !== 0) {
+		} else if (dy !== 0) {
 			if (game.checkLeftEdge(x, y)) {
 				neighbors.push([x - 1, y]);
 			}
 			if (game.checkRightEdge(x, y)) {
 				neighbors.push([x + 1, y]);
 			}
-			if (game.checkBottomEdge(x, y)) {
+			if (dy === 1 && game.checkBottomEdge(x, y)) {
+				neighbors.push([x, y + dy]);
+			} else if (dy === -1 && game.checkTopEdge(x, y)) {
 				neighbors.push([x, y + dy]);
 			}
 		}
@@ -180,6 +197,6 @@ function findNeighbours(node: Node, game:  Game, grid: Node[][]) {
 			neighbors.push([neighborNode.x, neighborNode.y]);
 		}
 	}
-	console.log(neighbors)
+
 	return neighbors;
 }
