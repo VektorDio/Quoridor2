@@ -4,6 +4,7 @@ import viteLogo from '/vite.svg'
 import './App.css'
 import Game from "./model/Game.ts";
 import aStar from "./pathfinding/AStar.ts";
+import JPS from "./pathfinding/JPS.ts";
 
 function App() {
 	const [count, setCount] = useState(0)
@@ -41,7 +42,12 @@ function App() {
 	const startTime = performance.now()
 	console.log(aStar({x:0,y:8}, {x:8,y:0}, game))
 	const endTime = performance.now()
-	console.log(`Call took ${endTime - startTime} milliseconds`)
+	console.log(`Astar took ${endTime - startTime} milliseconds`)
+
+	const startTime2 = performance.now()
+	console.log(JPS({x:0,y:8}, {x:8,y:0}, game))
+	const endTime2 = performance.now()
+	console.log(`JPS took ${endTime2 - startTime2} milliseconds`)
 
 	return (
 		<>

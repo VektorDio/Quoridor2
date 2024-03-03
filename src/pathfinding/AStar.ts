@@ -97,5 +97,5 @@ export default function aStar(start: Cell, end: Cell, game: Game) {
 }
 
 function manhattanDistance(cell1: Cell | Node, cell2: Cell) {
-	return Math.abs (cell1.x - cell2.x) + Math.abs (cell1.y - cell2.y);
+	return Math.abs(cell1.x - cell2.x) + Math.abs(cell1.y - cell2.y);
 }
