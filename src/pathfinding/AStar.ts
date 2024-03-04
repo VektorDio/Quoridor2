@@ -4,6 +4,7 @@ import Node from "./Node.ts";
 import Game from "../model/Game.ts";
 
 export default function aStar(start: Cell, end: Cell, game: Game) {
+	const diagnostic = false
 	const grid = []
 	// Initializing grid
 	for (let i = 0; i < game.gridWidth; i++) {
@@ -35,7 +36,7 @@ export default function aStar(start: Cell, end: Cell, game: Game) {
 				ret.push(curr);
 				curr = curr.parent;
 			}
-			console.log({iterations, neighboursChecked})
+			diagnostic && console.log({iterations, neighboursChecked})
 			return ret.reverse(); // ?
 		}
 
@@ -91,7 +92,7 @@ export default function aStar(start: Cell, end: Cell, game: Game) {
 			}
 		}
 	}
-	console.log({iterations, neighboursChecked})
+	diagnostic && console.log({iterations, neighboursChecked})
 	// No result was found
 	return []
 }
