@@ -3,17 +3,16 @@ import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 import Game from "./model/Game.ts";
-import aStar from "./pathfinding/AStar.ts";
-import JPS from "./pathfinding/JPS.ts";
+// import aStar from "./pathfinding/AStar.ts";
+// import JPS from "./pathfinding/JPS.ts";
 
 function App() {
 	const [count, setCount] = useState(0)
 
 	const game = new Game()
 
-	// game.executeMove({newX: 4, newY: 0})
-	// game.executeMove({newX: 4, newY: 1})
-	// game.executeMove({newX: 4, newY: 1})
+	game.executeMove({newPosition: {x: 5, y: 4}})
+	game.executeMove({newPosition: {x: 4, y: 4}})
 	// game.executeMove({position: "11v", removedWalls: []})
 	// game.executeMove({position: "21h", removedWalls: []})
 	// game.executeMove({position: "07v", removedWalls: []})
@@ -34,20 +33,18 @@ function App() {
 	// game.executeMove({position: "61v", removedWalls: []})
 	// game.executeMove({position: "65h", removedWalls: []})
 	// game.executeMove({position: "66v", removedWalls: []})
-	// console.log(game.showGameState())
-	// game.undoLastMove()
-	// console.log(game.showGameState())
-	// console.log(game)
-	// console.log(game.possiblePlayerMoves())
-	const startTime = performance.now()
-	console.log(aStar({x:0,y:8}, {x:8,y:0}, game))
-	const endTime = performance.now()
-	console.log(`Astar took ${endTime - startTime} milliseconds`)
 
-	const startTime2 = performance.now()
-	console.log(JPS({x:8,y:0}, {x:0,y:8}, game))
-	const endTime2 = performance.now()
-	console.log(`JPS took ${endTime2 - startTime2} milliseconds`)
+	//console.log(game.showGameState())
+
+	// const startTime = performance.now()
+	// console.log(aStar({x:0,y:8}, {x:8,y:0}, game))
+	// const endTime = performance.now()
+	// console.log(`Astar took ${endTime - startTime} milliseconds`)
+
+	// const startTime2 = performance.now()
+	// console.log(JPS({x:8,y:0}, {x:0,y:8}, game))
+	// const endTime2 = performance.now()
+	// console.log(`JPS took ${endTime2 - startTime2} milliseconds`)
 
 	return (
 		<>

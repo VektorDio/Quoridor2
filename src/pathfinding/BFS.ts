@@ -2,7 +2,7 @@ import Game from "../model/Game.ts";
 import {Cell} from "../model/Cell.ts";
 import Node from "./Node.ts";
 
-export default function BFS(start: Cell, end: Cell, game: Game) {
+export default function bfs(start: Cell, end: Cell, game: Game) {
 	const grid = []
 	// Initializing grid
 	for (let i = 0; i < game.gridWidth; i++) {

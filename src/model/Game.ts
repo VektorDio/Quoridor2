@@ -146,7 +146,7 @@ export default class Game implements Model{
 		return this.players[this.playerIndex]
 	}
 
-	private getOtherPlayer(): Player {
+	getOtherPlayer(): Player {
 		return this.playerIndex === 0 ? this.players[1] : this.players[0]
 	}
 

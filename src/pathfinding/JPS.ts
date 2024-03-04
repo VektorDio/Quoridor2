@@ -192,7 +192,7 @@ function findNeighbours(node: Node, game:  Game, grid: Node[][]) {
 			neighbourNodes.push(grid[y + 1][x])
 		}
 		
-		for (let i = 0, l = neighbourNodes.length; i < l; ++i) { // ???
+		for (let i = 0; i < neighbourNodes.length; i++) {
 			const neighborNode = neighbourNodes[i];
 			neighbors.push([neighborNode.x, neighborNode.y]);
 		}
