@@ -1,7 +1,7 @@
 import Game from "../model/Game.ts";
 import {isPlayerMove, Move} from "../model/Move.ts";
-import jps from "../pathfinding/JPS.ts";
-//import aStar from "../pathfinding/AStar.ts";
+//import jps from "../pathfinding/JPS.ts";
+import aStar from "../pathfinding/AStar.ts";
 
 export default function getNextMove(game: Game): Move {
 	const color = game.playerIndex === 0 ? 1 : -1
@@ -20,11 +20,11 @@ function pvs(depth: number, a: number, b: number, color: number, game: Game): [n
 	const [ player1, player2 ] = game.players
 	// checking if position is terminal
 	if (player1.position.y === player1.goal[0].y) {
-		return [color * 99, undefined]
+		return [color * 999, undefined]
 	}
 
 	if (player2.position.y === player2.goal[0].y) {
-		return [color * -99, undefined]
+		return [color * -999, undefined]
 	}
 
 	if (depth === 0) {
@@ -57,7 +57,7 @@ function pvs(depth: number, a: number, b: number, color: number, game: Game): [n
 		}
 
 		// if I leave (score > a), it will really don't want to place walls, probably an evaluation function oversight
-		if (score >= a || !bestMove) { // can be optimised
+		if (depth === 6 && (score > a || !bestMove)) { // can be optimised
 			bestMove = move
 		}
 
@@ -69,7 +69,7 @@ function pvs(depth: number, a: number, b: number, color: number, game: Game): [n
 	return [a, bestMove]
 }
 
-function evaluatePosition(game: Game) {
+export function evaluatePosition(game: Game) {
 	const [ player1, player2 ] = game.players
 	// const d1 =  Math.abs(player1.goal[0].y - player1.position.y)
 	// const d2 =  Math.abs(player2.goal[0].y - player2.position.y)
@@ -77,15 +77,19 @@ function evaluatePosition(game: Game) {
 	let d1 = 99, d2 = 99
 
 	player1.goal.forEach(goalCell => {
-		const path = jps(goalCell, player1.position, game) // searching path from goal to player, can be optimised
-		// g supposed to be travel distance, i really hope jps returns in correctly
-		const pathLength = path.length > 0 ? path[path.length - 1].g : 99 // if goal blocked, pathfinding return empty array
+		// const path = jps(goalCell, player1.position, game) // searching path from goal to player, can be optimised
+		// // g supposed to be travel distance, I really hope jps returns in correctly
+		// const pathLength = path.length > 0 ? path[path.length - 1].g : 99 // if goal blocked, pathfinding return empty array
+		const path = aStar(goalCell, player1.position, game)
+		const pathLength = path.length === 0 ? 99 : path.length
 		d1 = Math.min(d1, pathLength)
 	})
 
 	player2.goal.forEach(goalCell => {
-		const path = jps(goalCell, player2.position, game)
-		const pathLength = path.length > 0 ? path[path.length - 1].g : 99
+		// const path = jps(goalCell, player2.position, game)
+		// const pathLength = path.length > 0 ? path[path.length - 1].g : 99
+		const path = aStar(goalCell, player2.position, game)
+		const pathLength = path.length === 0 ? 99 : path.length
 		d2 = Math.min(d2, pathLength)
 	})
 
@@ -95,7 +99,7 @@ function evaluatePosition(game: Game) {
 function getPossibleMoves(game: Game, depth: number) {
 	const possibleMoves = game.possiblePlayerMoves()
 
-	if (depth > 1 && game.getCurrentPlayer().walls > 0) {
+	if (depth < 6 && game.getCurrentPlayer().walls > 0) { // depth value should be tested and implemented properly
 		game.wallsAvailable.forEach(wall => possibleMoves.push({ position: wall, removedWalls: []}))
 	}
 
