@@ -4,7 +4,7 @@ import {Player} from "./Player.ts";
 import {areCellsEqual, Cell} from "./Cell.ts";
 import {Orientation, wallFromString, wallToString} from "./Wall.ts";
 
-export default class Game implements Model{
+export default class Game implements Model {
 	gridEdges = new Set<number>();
 	wallsAvailable = new Set<string>();
 	moveHistory: Move[] = [];
@@ -126,6 +126,8 @@ export default class Game implements Model{
 				// restore available moves
 				lastMove.removedWalls.forEach(e => this.wallsAvailable.add(e))
 
+				this.wallsAvailable.add(lastMove.position) // adding wall back to the pool
+
 				let firstEdge, secondEdge
 				if (orientation === Orientation.Horizontal) {
 					firstEdge = this.getBottomEdge(x, y)
@@ -134,6 +136,8 @@ export default class Game implements Model{
 					firstEdge = this.getRightEdge(x, y)
 					secondEdge = this.getRightEdge(x, y + 1)
 				}
+
+				currentPlayer.walls += 1 // restoring counter
 
 				// restoring edges
 				this.gridEdges.add(firstEdge)
