@@ -8,11 +8,12 @@ export default function getNextMove(game: Game): Move {
 	const depth = 6
 
 	// right now, if you call function in an ended position, it will crush
-	const move = pvs(depth, -999, 999, color, game)[1]! // I don`t know where I got th alpha beta value
-	console.log("Color: " + color)
-	// @ts-ignore
+	const [score, move ] = pvs(depth, -999, 999, color, game) // I don`t know where I got th alpha beta value
+	console.log("Color: " + color + " Score: " + score)
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-expect-error
 	console.log(isPlayerMove(move) ? move.newPosition : move.position)
-	return move
+	return move!
 }
 
 function pvs(depth: number, a: number, b: number, color: number, game: Game): [number, Move | undefined] {
@@ -55,7 +56,8 @@ function pvs(depth: number, a: number, b: number, color: number, game: Game): [n
 			game.undoLastMove() //?
 		}
 
-		if (score > a || !bestMove) { // can be optimised
+		// if I leave (score > a), it will really don't want to place walls, probably an evaluation function oversight
+		if (score >= a || !bestMove) { // can be optimised
 			bestMove = move
 		}
 
@@ -76,6 +78,7 @@ function evaluatePosition(game: Game) {
 
 	player1.goal.forEach(goalCell => {
 		const path = jps(goalCell, player1.position, game) // searching path from goal to player, can be optimised
+		// g supposed to be travel distance, i really hope jps returns in correctly
 		const pathLength = path.length > 0 ? path[path.length - 1].g : 99 // if goal blocked, pathfinding return empty array
 		d1 = Math.min(d1, pathLength)
 	})
