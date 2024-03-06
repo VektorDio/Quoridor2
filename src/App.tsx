@@ -6,15 +6,24 @@ import Game from "./model/Game.ts";
 
 import jps from "./pathfinding/JPS.ts";
 import aStar from "./pathfinding/AStar.ts";
+import {evaluatePosition} from "./bots/NegaScout.ts";
 
 function App() {
 	const [count, setCount] = useState(0)
 
 	const game = new Game()
 
-	// game.executeMove({newPosition: {x: 5, y: 4}})
-	// game.executeMove({newPosition: {x: 4, y: 4}})
-	// game.executeMove({position: "11v", removedWalls: []})
+	game.executeMove({newPosition: {x: 0, y: 8}})
+	game.executeMove({newPosition: {x: 8, y: 0}})
+	console.log("ev " + evaluatePosition(game))
+	game.executeMove({position: "70h", removedWalls: []})
+	console.log("ev " +evaluatePosition(game))
+	console.log(game.showGameState())
+	console.log(game.possiblePlayerMoves())
+	game.undoLastMove()
+	console.log("ev " + evaluatePosition(game))
+	console.log(game.showGameState())
+	console.log(game.possiblePlayerMoves())
 	// game.executeMove({position: "21h", removedWalls: []})
 	// game.executeMove({position: "07v", removedWalls: []})
 	// game.executeMove({position: "16v", removedWalls: []})
@@ -36,18 +45,20 @@ function App() {
 	// game.executeMove({position: "66v", removedWalls: []})
 
 	//console.log(game.showGameState())
-	game.executeMove({position: "47h", removedWalls: []})
-	console.log(game.showGameState())
+	// game.executeMove({position: "47h", removedWalls: []})
+	// game.executeMove({newPosition: {x: 4, y: 1}})
+	// console.log(evaluatePosition(game))
 
-	const startTime = performance.now()
-	console.log(jps({x:4,y:8}, {x:3,y:0}, game))
-	const endTime = performance.now()
-	console.log(`aStar took ${endTime - startTime} milliseconds`)
 
-	const startTime2 = performance.now()
-	console.log(aStar({x:4,y:8}, {x:3,y:0}, game))
-	const endTime2 = performance.now()
-	console.log(`JPS took ${endTime2 - startTime2} milliseconds`)
+	// const startTime = performance.now()
+	// console.log(aStar({x:4,y:8}, {x:3,y:0}, game))
+	// const endTime = performance.now()
+	// console.log(`aStar took ${endTime - startTime} milliseconds`)
+	//
+	// const startTime2 = performance.now()
+	// console.log(jps({x:4,y:8}, {x:3,y:0}, game))
+	// const endTime2 = performance.now()
+	// console.log(`JPS took ${endTime2 - startTime2} milliseconds`)
 
 	return (
 		<>
