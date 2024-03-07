@@ -40,7 +40,7 @@ const Wall: React.FC<IWallProps> = ({ orientation, position, isPlaced, isAvailab
 		<div
 			onClick={e => placeWall(e)}
 			className={`
-			  absolute top-full z-10 rounded opacity-0bg-zinc-300
+			  absolute top-full z-10 rounded opacity-0 bg-zinc-300
 				${styles[orientation]}
 				${isPlaced ? 'opacity-100' : 'opacity-0'}
 				${isAvailable ? 'hover:opacity-100' : ''}`}
