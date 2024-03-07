@@ -1,399 +1,430 @@
-import Model from "./Model.ts";
-import {isPlayerMove, Move, MovePlayer, MoveWall} from "./Move.ts";
-import {Player} from "./Player.ts";
-import {areCellsEqual, Cell} from "./Cell.ts";
-import {Orientation, wallFromString, wallToString} from "./Wall.ts";
+import Model from './Model.ts';
+import { isPlayerMove, Move, MovePlayer, MoveWall } from './Move.ts';
+import { Player } from './Player.ts';
+import { areCellsEqual, Cell } from './Cell.ts';
+import { Orientation, wallFromString, wallToString } from './Wall.ts';
 
-export default class Game implements Model{
+export default class Game implements Model {
 	gridEdges = new Set<number>();
 	wallsAvailable = new Set<string>();
 	moveHistory: Move[] = [];
-	playerIndex= 0;
+	playerIndex = 0;
 	gridWidth = 9;
 	players: Player[] = [
 		{
-			position: {x: 4, y: 8},
+			position: { x: 4, y: 8 },
 			walls: 10,
-			goal: [{x: 0, y: 0},{x: 1, y: 0},{x: 2, y: 0},{x: 3, y: 0},{x: 4, y: 0},{x: 5, y: 0},{x: 6, y: 0},{x: 7, y: 0},{x: 8, y: 0}],
-			goalStr: new Set(["00","10","20","30","40","50","60","70",'80'])
+			goal: [
+				{ x: 0, y: 0 },
+				{ x: 1, y: 0 },
+				{ x: 2, y: 0 },
+				{ x: 3, y: 0 },
+				{ x: 4, y: 0 },
+				{ x: 5, y: 0 },
+				{ x: 6, y: 0 },
+				{ x: 7, y: 0 },
+				{ x: 8, y: 0 }
+			],
+			goalStr: new Set(['00', '10', '20', '30', '40', '50', '60', '70', '80'])
 		},
 		{
-			position: {x: 4, y: 0},
+			position: { x: 4, y: 0 },
 			walls: 10,
-			goal: [{x: 0, y: 8},{x: 1, y: 8},{x: 2, y: 8},{x: 3, y: 8},{x: 4, y: 8},{x: 5, y: 8},{x: 6, y: 8},{x: 7, y: 8},{x: 8, y: 8}],
-			goalStr: new Set(["08","18","28","38","48","58","68","78","88"])
+			goal: [
+				{ x: 0, y: 8 },
+				{ x: 1, y: 8 },
+				{ x: 2, y: 8 },
+				{ x: 3, y: 8 },
+				{ x: 4, y: 8 },
+				{ x: 5, y: 8 },
+				{ x: 6, y: 8 },
+				{ x: 7, y: 8 },
+				{ x: 8, y: 8 }
+			],
+			goalStr: new Set(['08', '18', '28', '38', '48', '58', '68', '78', '88'])
 		}
-	]
+	];
 
 	constructor() {
-		this.initializeWalls()
-		this.initializeEdges()
+		this.initializeWalls();
+		this.initializeEdges();
 	}
 
 	executeMove(move: Move): void {
+		console.log(move);
 		if (isPlayerMove(move)) {
-			this.executePlayerMove(move)
+			this.executePlayerMove(move);
 		} else {
-			this.executeWallMove(move)
+			this.executeWallMove(move);
 		}
-		this.moveHistory.push(move)
-		this.movePlayerIndex()
+		this.moveHistory.push(move);
+		this.movePlayerIndex();
 	}
 
 	private executePlayerMove(move: MovePlayer): void {
-		const currentPlayer = this.getCurrentPlayer()
-		move.previousPosition = { x: currentPlayer.position.x, y: currentPlayer.position.y}
-		currentPlayer.position = { x: move.newPosition.x, y: move.newPosition.y }
+		const currentPlayer = this.getCurrentPlayer();
+		move.previousPosition = { x: currentPlayer.position.x, y: currentPlayer.position.y };
+		currentPlayer.position = { x: move.newPosition.x, y: move.newPosition.y };
 	}
 
 	private executeWallMove(move: MoveWall): void {
-		const { position: { x, y}, orientation } = wallFromString(move.position)
-		let firstEdge, secondEdge
+		const {
+			position: { x, y },
+			orientation
+		} = wallFromString(move.position);
+		let firstEdge, secondEdge;
 		if (orientation === Orientation.Horizontal) {
-			firstEdge = this.getBottomEdge(x, y)
-			secondEdge = this.getBottomEdge(x + 1, y)
+			firstEdge = this.getBottomEdge(x, y);
+			secondEdge = this.getBottomEdge(x + 1, y);
 		} else {
-			firstEdge = this.getRightEdge(x, y)
-			secondEdge = this.getRightEdge(x, y + 1)
+			firstEdge = this.getRightEdge(x, y);
+			secondEdge = this.getRightEdge(x, y + 1);
 		}
 
 		// trying to place wall
-		this.gridEdges.delete(firstEdge)
-		this.gridEdges.delete(secondEdge)
+		this.gridEdges.delete(firstEdge);
+		this.gridEdges.delete(secondEdge);
 
-		let winConditionsIsAccessible = true
+		let winConditionsIsAccessible = true;
 
 		for (const player of this.players) {
 			if (!this.checkWinConditionStr(player.position, player.goalStr)) {
-				winConditionsIsAccessible = false
-				break
+				winConditionsIsAccessible = false;
+				break;
 			}
 		}
 
 		if (!winConditionsIsAccessible) {
-			this.gridEdges.add(firstEdge)
-			this.gridEdges.add(secondEdge)
-			console.log("Wall blocks someone`s path")
-			throw new Error("Wall blocks someone`s path")
+			this.gridEdges.add(firstEdge);
+			this.gridEdges.add(secondEdge);
+			console.log('Wall blocks someone`s path');
+			throw new Error('Wall blocks someone`s path');
 		}
 
-		const currentPlayer = this.getCurrentPlayer()
-		currentPlayer.walls -= 1 // reducing player wall counter
-		this.wallsAvailable.delete(move.position)
+		const currentPlayer = this.getCurrentPlayer();
+		currentPlayer.walls -= 1; // reducing player wall counter
+		this.wallsAvailable.delete(move.position);
 
-		let wall1, wall2, wall3
+		let wall1, wall2, wall3;
 
-		if (orientation === "h") {
-			wall1 = wallToString({ position: { x: x + 1, y }, orientation: Orientation.Horizontal })
-			wall2 = wallToString({ position: { x: x - 1, y }, orientation: Orientation.Horizontal })
-			wall3 = wallToString({ position: { x, y }, orientation: Orientation.Vertical })
+		if (orientation === 'h') {
+			wall1 = wallToString({ position: { x: x + 1, y }, orientation: Orientation.Horizontal });
+			wall2 = wallToString({ position: { x: x - 1, y }, orientation: Orientation.Horizontal });
+			wall3 = wallToString({ position: { x, y }, orientation: Orientation.Vertical });
 		} else {
-			wall1 = wallToString({ position: { x, y: y + 1 }, orientation: Orientation.Vertical })
-			wall2 = wallToString({ position: { x, y: y - 1 }, orientation: Orientation.Vertical })
-			wall3 = wallToString({ position: { x, y }, orientation: Orientation.Horizontal })
+			wall1 = wallToString({ position: { x, y: y + 1 }, orientation: Orientation.Vertical });
+			wall2 = wallToString({ position: { x, y: y - 1 }, orientation: Orientation.Vertical });
+			wall3 = wallToString({ position: { x, y }, orientation: Orientation.Horizontal });
 		}
 
 		if (this.wallsAvailable.has(wall1)) {
-			this.wallsAvailable.delete(wall1)
-			move.removedWalls.push(wall1)
+			this.wallsAvailable.delete(wall1);
+			move.removedWalls.push(wall1);
 		}
 		if (this.wallsAvailable.has(wall2)) {
-			this.wallsAvailable.delete(wall2)
-			move.removedWalls.push(wall2)
+			this.wallsAvailable.delete(wall2);
+			move.removedWalls.push(wall2);
 		}
 		if (this.wallsAvailable.has(wall3)) {
-			this.wallsAvailable.delete(wall3)
-			move.removedWalls.push(wall3)
+			this.wallsAvailable.delete(wall3);
+			move.removedWalls.push(wall3);
 		}
 	}
 
 	undoLastMove(): void {
-		const lastMove = this.moveHistory.pop()
+		const lastMove = this.moveHistory.pop();
 		if (lastMove !== undefined) {
-			this.movePlayerIndex() // moving turn back
-			const currentPlayer = this.getCurrentPlayer()
+			this.movePlayerIndex(); // moving turn back
+			const currentPlayer = this.getCurrentPlayer();
 
 			if (isPlayerMove(lastMove)) {
-				if (lastMove.previousPosition != null) { // typescript go brr
-					currentPlayer.position.x = lastMove.previousPosition.x
-					currentPlayer.position.y = lastMove.previousPosition.y
+				if (lastMove.previousPosition != null) {
+					// typescript go brr
+					currentPlayer.position.x = lastMove.previousPosition.x;
+					currentPlayer.position.y = lastMove.previousPosition.y;
 				}
 			} else {
-				const { position: { x, y }, orientation } = wallFromString(lastMove.position)
+				const {
+					position: { x, y },
+					orientation
+				} = wallFromString(lastMove.position);
 				// restore available moves
-				lastMove.removedWalls.forEach(e => this.wallsAvailable.add(e))
+				lastMove.removedWalls.forEach(e => this.wallsAvailable.add(e));
 
-				let firstEdge, secondEdge
+				let firstEdge, secondEdge;
 				if (orientation === Orientation.Horizontal) {
-					firstEdge = this.getBottomEdge(x, y)
-					secondEdge = this.getBottomEdge(x + 1, y)
+					firstEdge = this.getBottomEdge(x, y);
+					secondEdge = this.getBottomEdge(x + 1, y);
 				} else {
-					firstEdge = this.getRightEdge(x, y)
-					secondEdge = this.getRightEdge(x, y + 1)
+					firstEdge = this.getRightEdge(x, y);
+					secondEdge = this.getRightEdge(x, y + 1);
 				}
 
 				// restoring edges
-				this.gridEdges.add(firstEdge)
-				this.gridEdges.add(secondEdge)
+				this.gridEdges.add(firstEdge);
+				this.gridEdges.add(secondEdge);
 			}
 		}
 	}
 
-	getCurrentPlayer(): Player{
-		return this.players[this.playerIndex]
+	getCurrentPlayer(): Player {
+		return this.players[this.playerIndex];
 	}
 
 	private getOtherPlayer(): Player {
-		return this.playerIndex === 0 ? this.players[1] : this.players[0]
+		return this.playerIndex === 0 ? this.players[1] : this.players[0];
 	}
 
 	private movePlayerIndex(): void {
-		this.playerIndex = this.playerIndex === 0 ? 1 : 0
+		this.playerIndex = this.playerIndex === 0 ? 1 : 0;
 	}
 
 	private getLeftEdge(nodeX: number, nodeY: number): number {
-		if (nodeX <= 0) return -1 // left edge can generate negative numbers
-		return (nodeX - 1) + (nodeY * 2 * this.gridWidth)
+		if (nodeX <= 0) return -1; // left edge can generate negative numbers
+		return nodeX - 1 + nodeY * 2 * this.gridWidth;
 	}
 
 	private getRightEdge(nodeX: number, nodeY: number): number {
-		return (nodeX) + (nodeY * 2 * this.gridWidth)
+		return nodeX + nodeY * 2 * this.gridWidth;
 	}
 
 	private getTopEdge(nodeX: number, nodeY: number): number {
-		return (nodeX) + ((nodeY * 2 - 1) * this.gridWidth)
+		return nodeX + (nodeY * 2 - 1) * this.gridWidth;
 	}
 
 	private getBottomEdge(nodeX: number, nodeY: number): number {
-		return (nodeX) + ((nodeY * 2 + 1) * this.gridWidth)
+		return nodeX + (nodeY * 2 + 1) * this.gridWidth;
 	}
 
 	private checkLeftEdge(nodeX: number, nodeY: number): boolean {
-		return this.gridEdges.has(this.getLeftEdge(nodeX, nodeY))
+		return this.gridEdges.has(this.getLeftEdge(nodeX, nodeY));
 	}
 
 	private checkRightEdge(nodeX: number, nodeY: number): boolean {
-		return this.gridEdges.has(this.getRightEdge(nodeX, nodeY))
+		return this.gridEdges.has(this.getRightEdge(nodeX, nodeY));
 	}
 
 	private checkTopEdge(nodeX: number, nodeY: number): boolean {
-		return this.gridEdges.has(this.getTopEdge(nodeX, nodeY))
+		return this.gridEdges.has(this.getTopEdge(nodeX, nodeY));
 	}
 
 	private checkBottomEdge(nodeX: number, nodeY: number): boolean {
-		return this.gridEdges.has(this.getBottomEdge(nodeX, nodeY))
+		return this.gridEdges.has(this.getBottomEdge(nodeX, nodeY));
 	}
 
 	checkWinCondition(playerNode: Cell, playerGoal: Cell[]): boolean {
-		const toDo: Cell[] = [{x: playerNode.x, y:playerNode.y}]
-		const done: Cell[] = []
+		const toDo: Cell[] = [{ x: playerNode.x, y: playerNode.y }];
+		const done: Cell[] = [];
 
 		while (toDo.length > 0) {
-			const node = toDo.pop()
-			if (node !== undefined) { // typescript cancer
-				done.push(node)
+			const node = toDo.pop();
+			if (node !== undefined) {
+				// typescript cancer
+				done.push(node);
 				for (const adjustedNode of this.adjustedNodes(node)) {
 					if (playerGoal.find(goal => areCellsEqual(goal, adjustedNode))) {
-						return true
+						return true;
 					}
-					if (done.find(doneNode => areCellsEqual(doneNode, adjustedNode)) === undefined &&
-						toDo.find(doneNode => areCellsEqual(doneNode, adjustedNode)) === undefined) {
-						toDo.push(adjustedNode)
+					if (
+						done.find(doneNode => areCellsEqual(doneNode, adjustedNode)) === undefined &&
+						toDo.find(doneNode => areCellsEqual(doneNode, adjustedNode)) === undefined
+					) {
+						toDo.push(adjustedNode);
 					}
 				}
 			}
 		}
-		return false
+		return false;
 	}
 
 	private adjustedNodes(node: Cell): Cell[] {
-		const nodes = []
-		if(this.checkTopEdge(node.x, node.y)) {
-			nodes.push({x: node.x, y: node.y - 1})
+		const nodes = [];
+		if (this.checkTopEdge(node.x, node.y)) {
+			nodes.push({ x: node.x, y: node.y - 1 });
 		}
-		if(this.checkLeftEdge(node.x, node.y)) {
-			nodes.push({x: node.x - 1, y: node.y})
+		if (this.checkLeftEdge(node.x, node.y)) {
+			nodes.push({ x: node.x - 1, y: node.y });
 		}
-		if(this.checkRightEdge(node.x, node.y)) {
-			nodes.push({x: node.x + 1, y: node.y})
+		if (this.checkRightEdge(node.x, node.y)) {
+			nodes.push({ x: node.x + 1, y: node.y });
 		}
-		if(this.checkBottomEdge(node.x, node.y)) {
-			nodes.push({x: node.x, y: node.y + 1})
+		if (this.checkBottomEdge(node.x, node.y)) {
+			nodes.push({ x: node.x, y: node.y + 1 });
 		}
-		return nodes
+		return nodes;
 	}
 
 	checkWinConditionStr(playerNode: Cell, playerGoal: Set<string>): boolean {
-		const toDoSet:Set<string> = new Set()
-		const doneSet:Set<string> = new Set()
-		toDoSet.add(playerNode.x + "" + playerNode.y)
+		const toDoSet: Set<string> = new Set();
+		const doneSet: Set<string> = new Set();
+		toDoSet.add(playerNode.x + '' + playerNode.y);
 
 		while (toDoSet.size > 0) {
 			//const node = toDoSet.values().next().value
-			const node = [...toDoSet].pop()
+			const node = [...toDoSet].pop();
 
 			if (node !== undefined) {
-				toDoSet.delete(node)
-				doneSet.add(node)
+				toDoSet.delete(node);
+				doneSet.add(node);
 				for (const adjustedNode of this.adjustedNodesStr(node)) {
 					if (playerGoal.has(adjustedNode)) {
-						return true
+						return true;
 					}
 					if (!doneSet.has(adjustedNode)) {
-						toDoSet.add(adjustedNode)
+						toDoSet.add(adjustedNode);
 					}
 				}
 			}
 		}
-		return false
+		return false;
 	}
 
 	private adjustedNodesStr(node: string): string[] {
-		const nodes = []
-		const x = parseInt(node[0])
-		const y = parseInt(node[1])
+		const nodes = [];
+		const x = parseInt(node[0]);
+		const y = parseInt(node[1]);
 
-		if(this.checkTopEdge(x, y)) {
-			nodes.push(x + "" + (y - 1))
+		if (this.checkTopEdge(x, y)) {
+			nodes.push(x + '' + (y - 1));
 		}
-		if(this.checkLeftEdge(x, y)) {
-			nodes.push((x - 1) + "" + y)
+		if (this.checkLeftEdge(x, y)) {
+			nodes.push(x - 1 + '' + y);
 		}
-		if(this.checkRightEdge(x, y)) {
-			nodes.push((x + 1) + "" + y)
+		if (this.checkRightEdge(x, y)) {
+			nodes.push(x + 1 + '' + y);
 		}
-		if(this.checkBottomEdge(x, y)) {
-			nodes.push(x + "" + (y + 1))
+		if (this.checkBottomEdge(x, y)) {
+			nodes.push(x + '' + (y + 1));
 		}
-		return nodes
+		return nodes;
 	}
 
 	private initializeEdges(): void {
 		// actually, its (width * (width - 1)) * 2, but we need this to make it square
-		const amountOfEdges = (this.gridWidth * this.gridWidth) + (this.gridWidth * (this.gridWidth - 1))
+		const amountOfEdges = this.gridWidth * this.gridWidth + this.gridWidth * (this.gridWidth - 1);
 		// generating edges as linear sequence
 		for (let i = 0; i < amountOfEdges; i++) {
-			const x = i % this.gridWidth
-			const y = (i - x) / this.gridWidth
+			const x = i % this.gridWidth;
+			const y = (i - x) / this.gridWidth;
 
 			// removing rightmost horizontal edges, as they newer will exist
-			const isRedundantEdge = (y % 2 == 0) && (x == (this.gridWidth - 1))
+			const isRedundantEdge = y % 2 == 0 && x == this.gridWidth - 1;
 
 			if (!isRedundantEdge) {
-				this.gridEdges.add(i)
+				this.gridEdges.add(i);
 			}
 		}
 	}
 
 	private initializeWalls(): void {
 		for (let i = 0; i < this.gridWidth - 1; i++) {
-			for (let j = 0; j < this.gridWidth - 1; j++){
-				const wallH = "".concat(String(i), String(j), "h")
-				const wallV = "".concat(String(i), String(j), "v")
-				this.wallsAvailable.add(wallV)
-				this.wallsAvailable.add(wallH)
+			for (let j = 0; j < this.gridWidth - 1; j++) {
+				const wallH = ''.concat(String(i), String(j), 'h');
+				const wallV = ''.concat(String(i), String(j), 'v');
+				this.wallsAvailable.add(wallV);
+				this.wallsAvailable.add(wallH);
 			}
 		}
 	}
 
-	possiblePlayerMoves(): Move[] {
-		const moveSet = []
-		const { position} = this.getCurrentPlayer()
-		const { position: nextPlayerPos} = this.getOtherPlayer()
+	possiblePlayerMoves(): MovePlayer[] {
+		const moveSet = [];
+		const { position } = this.getCurrentPlayer();
+		const { position: nextPlayerPos } = this.getOtherPlayer();
 
 		if (this.checkTopEdge(position.x, position.y)) {
 			// check if there is another player above
 			if (position.x === nextPlayerPos.x && position.y === nextPlayerPos.y + 1) {
 				if (this.checkTopEdge(nextPlayerPos.x, nextPlayerPos.y)) {
 					// jump over other player
-					moveSet.push({newPosition: {x: position.x, y: position.y - 2}})
+					moveSet.push({ newPosition: { x: position.x, y: position.y - 2 } });
 				} else {
 					if (this.checkLeftEdge(nextPlayerPos.x, nextPlayerPos.y)) {
 						// jump left to the other player
-						moveSet.push({newPosition: {x: position.x - 1, y: position.y - 1}})
+						moveSet.push({ newPosition: { x: position.x - 1, y: position.y - 1 } });
 					}
 					if (this.checkRightEdge(nextPlayerPos.x, nextPlayerPos.y)) {
 						// jump right to the other player
-						moveSet.push({newPosition: {x: position.x + 1, y: position.y - 1}})
+						moveSet.push({ newPosition: { x: position.x + 1, y: position.y - 1 } });
 					}
 				}
 			} else {
-				moveSet.push({newPosition: {x: position.x, y: position.y - 1}})
+				moveSet.push({ newPosition: { x: position.x, y: position.y - 1 } });
 			}
 		}
 
 		if (this.checkRightEdge(position.x, position.y)) {
 			if (position.x === nextPlayerPos.x - 1 && position.y === nextPlayerPos.y) {
 				if (this.checkRightEdge(nextPlayerPos.x, nextPlayerPos.y)) {
-					moveSet.push({newPosition: {x: position.x + 2, y: position.y}})
+					moveSet.push({ newPosition: { x: position.x + 2, y: position.y } });
 				} else {
 					if (this.checkTopEdge(nextPlayerPos.x, nextPlayerPos.y)) {
-						moveSet.push({newPosition: {x: position.x + 1, y: position.y - 1}})
+						moveSet.push({ newPosition: { x: position.x + 1, y: position.y - 1 } });
 					}
 					if (this.checkBottomEdge(nextPlayerPos.x, nextPlayerPos.y)) {
-						moveSet.push({newPosition: {x: position.x + 1, y: position.y + 1}})
+						moveSet.push({ newPosition: { x: position.x + 1, y: position.y + 1 } });
 					}
 				}
 			} else {
-				moveSet.push({newPosition: {x: position.x + 1, y: position.y}})
+				moveSet.push({ newPosition: { x: position.x + 1, y: position.y } });
 			}
 		}
 
 		if (this.checkLeftEdge(position.x, position.y)) {
 			if (position.x === nextPlayerPos.x + 1 && position.y === nextPlayerPos.y) {
 				if (this.checkLeftEdge(nextPlayerPos.x, nextPlayerPos.y)) {
-					moveSet.push({newPosition: {x: position.x - 2, y: position.y}})
+					moveSet.push({ newPosition: { x: position.x - 2, y: position.y } });
 				} else {
 					if (this.checkTopEdge(nextPlayerPos.x, nextPlayerPos.y)) {
-						moveSet.push({newPosition: {x: position.x - 1, y: position.y - 1}})
+						moveSet.push({ newPosition: { x: position.x - 1, y: position.y - 1 } });
 					}
 					if (this.checkBottomEdge(nextPlayerPos.x, nextPlayerPos.y)) {
-						moveSet.push({newPosition: {x: position.x - 1, y: position.y + 1}})
+						moveSet.push({ newPosition: { x: position.x - 1, y: position.y + 1 } });
 					}
 				}
 			} else {
-				moveSet.push({newPosition: {x: position.x - 1, y: position.y}})
+				moveSet.push({ newPosition: { x: position.x - 1, y: position.y } });
 			}
 		}
 
 		if (this.checkBottomEdge(position.x, position.y)) {
-			if (position.x === nextPlayerPos.x && position.y === (nextPlayerPos.y - 1)) {
+			if (position.x === nextPlayerPos.x && position.y === nextPlayerPos.y - 1) {
 				if (this.checkBottomEdge(nextPlayerPos.x, nextPlayerPos.y)) {
-					moveSet.push({newPosition: {x: position.x, y: position.y + 2}})
+					moveSet.push({ newPosition: { x: position.x, y: position.y + 2 } });
 				} else {
 					if (this.checkLeftEdge(nextPlayerPos.x, nextPlayerPos.y)) {
-						moveSet.push({newPosition: {x: position.x - 1, y: position.y + 1}})
+						moveSet.push({ newPosition: { x: position.x - 1, y: position.y + 1 } });
 					}
 					if (this.checkRightEdge(nextPlayerPos.x, nextPlayerPos.y)) {
-						moveSet.push({newPosition: {x: position.x + 1, y: position.y + 1}})
+						moveSet.push({ newPosition: { x: position.x + 1, y: position.y + 1 } });
 					}
 				}
 			} else {
-				moveSet.push({newPosition: {x: position.x, y: position.y + 1}})
+				moveSet.push({ newPosition: { x: position.x, y: position.y + 1 } });
 			}
 		}
 
-		return moveSet
+		return moveSet;
 	}
 
 	showGameState() {
-		const stateSize = this.gridWidth * 2 - 1
-		const state = new Array(stateSize).fill(0).map(() => new Array(stateSize).fill("0")) // i love js
+		const stateSize = this.gridWidth * 2 - 1;
+		const state = new Array(stateSize).fill(0).map(() => new Array(stateSize).fill('0')); // i love js
 
 		for (let i = 0; i < this.gridWidth; i++) {
 			for (let j = 0; j < this.gridWidth; j++) {
-				if(this.gridEdges.has(this.getRightEdge(i, j))) {
-					state[j*2][(i * 2) + 1] = "-"
+				if (this.gridEdges.has(this.getRightEdge(i, j))) {
+					state[j * 2][i * 2 + 1] = '-';
 				}
-				if(this.gridEdges.has(this.getBottomEdge(i, j))) {
-					state[(j * 2) + 1][i*2] = "|"
+				if (this.gridEdges.has(this.getBottomEdge(i, j))) {
+					state[j * 2 + 1][i * 2] = '|';
 				}
 			}
 		}
 
 		this.players.forEach((value, index) => {
-			state[value.position.y * 2][value.position.x * 2] = index + 1
-		})
-		return state
+			state[value.position.y * 2][value.position.x * 2] = index + 1;
+		});
+		return state;
 	}
 }
