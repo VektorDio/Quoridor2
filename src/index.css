@@ -23,3 +23,8 @@ body {
 	width: 100%;
 	margin: 0;
 }
+
+.main-col {
+	width: calc((100% - 675px) / 2);
+	height: 100%;
+}

@@ -68,7 +68,7 @@ const Cell: React.FC<ICellProps> = props => {
 	return (
 		<div
 			onClick={e => movePlayer(e, x, y)}
-			className={`cell size-[55px] m-[10px] relative ${isPossibleMove ? 'bg-emerald-900' : 'bg-slate-500'}`}
+			className={`cell flex size-[55px] m-[10px] relative ${isPossibleMove ? 'bg-emerald-900' : 'bg-slate-500'}`}
 		>
 			<Wall
 				orientation={Orientation.Horizontal}

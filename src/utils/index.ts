@@ -3,9 +3,8 @@ export function deepCopy<T>(classObj: T): T {
 }
 
 export function getColor(index: number | undefined) {
-	console.log(index);
 	if (index === undefined) {
 		return 'hidden';
 	}
-	return ['bg-white', 'bg-black', 'bg-red-900', 'bg-blue-900'][index];
+	return ['bg-white', 'bg-neutral-950', 'bg-red-900', 'bg-blue-900'][index];
 }
