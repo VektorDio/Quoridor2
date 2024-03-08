@@ -24,8 +24,8 @@ const Wall: React.FC<IWallProps> = ({ orientation, position, isPlaced, isAvailab
 	const { dispatch } = useContext(GameContext);
 
 	const styles: Record<Orientation, string> = {
-		[Orientation.Horizontal]: `w-[240%] h-1/5 mt-[4.5px]`,
-		[Orientation.Vertical]: `w-1/5 h-[240%] left-full top-0 ml-[4.5px]`
+		[Orientation.Horizontal]: `w-[240%] h-1/5 mt-[4.5px] top-full`,
+		[Orientation.Vertical]: `w-1/5 h-[240%] left-full top-0 ml-[4.5px] top-0  `
 	};
 
 	const placeWall = (e: React.MouseEvent<HTMLElement>) => {
@@ -40,7 +40,7 @@ const Wall: React.FC<IWallProps> = ({ orientation, position, isPlaced, isAvailab
 		<div
 			onClick={e => placeWall(e)}
 			className={`
-			  absolute top-full z-10 rounded opacity-0 bg-zinc-300
+			  absolute  z-10 rounded opacity-0 bg-zinc-300
 				${styles[orientation]}
 				${isPlaced ? 'opacity-100' : 'opacity-0'}
 				${isAvailable ? 'hover:opacity-100' : ''}`}
