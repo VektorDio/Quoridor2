@@ -49,6 +49,13 @@ export default class Game implements Model {
 	}
 
 	private executeWallMove(move: MoveWall): void {
+		const currentPlayer = this.getCurrentPlayer()
+
+		if (currentPlayer.walls <= 0 ) {
+			console.log("No more walls left")
+			throw new Error("No more walls left")
+		}
+
 		const { position: { x, y}, orientation } = wallFromString(move.position)
 		let firstEdge, secondEdge
 		if (orientation === Orientation.Horizontal) {
@@ -79,7 +86,7 @@ export default class Game implements Model {
 			throw new Error("Wall blocks someone`s path")
 		}
 
-		const currentPlayer = this.getCurrentPlayer()
+
 		currentPlayer.walls -= 1 // reducing player wall counter
 		this.wallsAvailable.delete(move.position)
 
