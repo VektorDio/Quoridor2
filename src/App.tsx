@@ -5,7 +5,7 @@ import React, { createContext, useMemo, useReducer } from 'react';
 import { reducer } from './reducer';
 import { Action } from './reducer/type';
 import PlayerCard from './components/PlayerCard/index.tsx';
-import { getColor } from './utils/index.ts';
+import { getColor } from './utils';
 
 export interface Context {
 	state: Game;
@@ -19,8 +19,6 @@ export const GameContext = createContext<Context>({
 	dispatch: () => {}
 });
 
-import jps from "./pathfinding/JPS.ts";
-import aStar from "./pathfinding/AStar.ts";
 
 function App() {
 	const [state, dispatch] = useReducer(reducer, game);
@@ -28,8 +26,8 @@ function App() {
 	return useMemo(() => {
 		return (
 			<GameContext.Provider value={{ state, dispatch }}>
-				<div className="flex flex-nowrap items-end">
-					<div className="grow main-col text-center">
+				<div className="flex flex-nowrap items-end justify-between">
+					<div className="main-col w-1/4 text-center">
 						{state.players.map((player, idx) => {
 							return (
 								<PlayerCard
@@ -40,14 +38,12 @@ function App() {
 							);
 						})}
 					</div>
-					<div className="flex justify-center  items-center">
-						<Board board={Array(state.gridWidth).fill(Array(state.gridWidth).fill('0'))}></Board>
-					</div>
-					<div className="main-col"></div>
+					<Board board={Array(state.gridWidth).fill(Array(state.gridWidth).fill('0'))}></Board>
+					<div className="main-col w-1/4"></div>
 				</div>
 			</GameContext.Provider>
 		);
-	}, [JSON.stringify(state.moveHistory), JSON.stringify(state.showGameState())]);
+	}, [JSON.stringify(state.moveHistory)]);
 }
 
 export default App;

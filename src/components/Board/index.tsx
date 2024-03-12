@@ -49,7 +49,7 @@ const Board: React.FC<IBoard> = ({ board }) => {
 	};
 
 	return (
-		<div className="flex flex-wrap w-[675px] h-full min-h-full">
+		<div className="board grid w-[50lvw] h-[50lvw] max-w-[600px] max-h-[600px]">
 			{board.map((row, idx) => {
 				return (
 					<React.Fragment key={idx}>

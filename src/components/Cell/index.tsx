@@ -24,8 +24,8 @@ const Wall: React.FC<IWallProps> = ({ orientation, position, isPlaced, isAvailab
 	const { dispatch } = useContext(GameContext);
 
 	const styles: Record<Orientation, string> = {
-		[Orientation.Horizontal]: `w-[240%] h-1/5 mt-[4.5px] top-full`,
-		[Orientation.Vertical]: `w-1/5 h-[240%] left-full top-0 ml-[4.5px] top-0  `
+		[Orientation.Horizontal]: `w-[225%] h-1/5 mt-[2px] top-full`,
+		[Orientation.Vertical]: `w-1/5 h-[225%] left-full top-0 ml-[2px] top-0  `
 	};
 
 	const placeWall = (e: React.MouseEvent<HTMLElement>) => {
@@ -68,7 +68,7 @@ const Cell: React.FC<ICellProps> = props => {
 	return (
 		<div
 			onClick={e => movePlayer(e, x, y)}
-			className={`cell flex size-[55px] m-[10px] relative ${isPossibleMove ? 'bg-emerald-900' : 'bg-slate-500'}`}
+			className={`cell flex size-full relative ${isPossibleMove ? 'bg-emerald-900' : 'bg-slate-500'}`}
 		>
 			<Wall
 				orientation={Orientation.Horizontal}
@@ -83,7 +83,7 @@ const Cell: React.FC<ICellProps> = props => {
 				isAvailable={isVWallAvailable}
 			/>
 			{Number.isInteger(playerIndex) ? (
-				<div className={`rounded-full size-10 m-auto	 ${getColor(playerIndex)}`} />
+				<div className={`rounded-full size-[75%] m-auto ${getColor(playerIndex)}`} />
 			) : null}
 		</div>
 	);
