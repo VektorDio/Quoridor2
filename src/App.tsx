@@ -19,6 +19,9 @@ export const GameContext = createContext<Context>({
 	dispatch: () => {}
 });
 
+import jps from "./pathfinding/JPS.ts";
+import aStar from "./pathfinding/AStar.ts";
+
 function App() {
 	const [state, dispatch] = useReducer(reducer, game);
 

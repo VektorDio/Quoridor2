@@ -51,7 +51,7 @@ export default class Game implements Model {
 	}
 
 	executeMove(move: Move): void {
-		console.log(move);
+		// move will be mutated after execution
 		if (isPlayerMove(move)) {
 			this.executePlayerMove(move);
 		} else {
@@ -62,17 +62,22 @@ export default class Game implements Model {
 	}
 
 	private executePlayerMove(move: MovePlayer): void {
-		const currentPlayer = this.getCurrentPlayer();
-		move.previousPosition = { x: currentPlayer.position.x, y: currentPlayer.position.y };
-		currentPlayer.position = { x: move.newPosition.x, y: move.newPosition.y };
+		const currentPlayer = this.getCurrentPlayer()
+		// mutating is a bad practise, but here we omit it for the sake of performance, as this method will be called a lot
+		move.previousPosition = { x: currentPlayer.position.x, y: currentPlayer.position.y}
+		currentPlayer.position = { x: move.newPosition.x, y: move.newPosition.y }
 	}
 
 	private executeWallMove(move: MoveWall): void {
-		const {
-			position: { x, y },
-			orientation
-		} = wallFromString(move.position);
-		let firstEdge, secondEdge;
+		const currentPlayer = this.getCurrentPlayer()
+
+		if (currentPlayer.walls <= 0 ) {
+			console.log("No more walls left")
+			throw new Error("No more walls left")
+		}
+
+		const { position: { x, y}, orientation } = wallFromString(move.position)
+		let firstEdge, secondEdge
 		if (orientation === Orientation.Horizontal) {
 			firstEdge = this.getBottomEdge(x, y);
 			secondEdge = this.getBottomEdge(x + 1, y);
@@ -101,9 +106,9 @@ export default class Game implements Model {
 			throw new Error('Wall blocks someone`s path');
 		}
 
-		const currentPlayer = this.getCurrentPlayer();
-		currentPlayer.walls -= 1; // reducing player wall counter
-		this.wallsAvailable.delete(move.position);
+
+		currentPlayer.walls -= 1 // reducing player wall counter
+		this.wallsAvailable.delete(move.position)
 
 		let wall1, wall2, wall3;
 
@@ -117,6 +122,7 @@ export default class Game implements Model {
 			wall3 = wallToString({ position: { x, y }, orientation: Orientation.Horizontal });
 		}
 
+		// mutating variable again
 		if (this.wallsAvailable.has(wall1)) {
 			this.wallsAvailable.delete(wall1);
 			move.removedWalls.push(wall1);
@@ -139,9 +145,8 @@ export default class Game implements Model {
 
 			if (isPlayerMove(lastMove)) {
 				if (lastMove.previousPosition != null) {
-					// typescript go brr
-					currentPlayer.position.x = lastMove.previousPosition.x;
-					currentPlayer.position.y = lastMove.previousPosition.y;
+					currentPlayer.position.x = lastMove.previousPosition.x
+					currentPlayer.position.y = lastMove.previousPosition.y
 				}
 			} else {
 				const {
@@ -151,7 +156,9 @@ export default class Game implements Model {
 				// restore available moves
 				lastMove.removedWalls.forEach(e => this.wallsAvailable.add(e));
 
-				let firstEdge, secondEdge;
+				this.wallsAvailable.add(lastMove.position) // adding wall back to the pool
+
+				let firstEdge, secondEdge
 				if (orientation === Orientation.Horizontal) {
 					firstEdge = this.getBottomEdge(x, y);
 					secondEdge = this.getBottomEdge(x + 1, y);
@@ -159,6 +166,8 @@ export default class Game implements Model {
 					firstEdge = this.getRightEdge(x, y);
 					secondEdge = this.getRightEdge(x, y + 1);
 				}
+
+				currentPlayer.walls += 1 // restoring counter
 
 				// restoring edges
 				this.gridEdges.add(firstEdge);
@@ -171,8 +180,8 @@ export default class Game implements Model {
 		return this.players[this.playerIndex];
 	}
 
-	private getOtherPlayer(): Player {
-		return this.playerIndex === 0 ? this.players[1] : this.players[0];
+	getOtherPlayer(): Player {
+		return this.playerIndex === 0 ? this.players[1] : this.players[0]
 	}
 
 	private movePlayerIndex(): void {
@@ -180,8 +189,8 @@ export default class Game implements Model {
 	}
 
 	private getLeftEdge(nodeX: number, nodeY: number): number {
-		if (nodeX <= 0) return -1; // left edge can generate negative numbers
-		return nodeX - 1 + nodeY * 2 * this.gridWidth;
+		if (nodeX <= 0) return -1 // left edge can generate negative numbers, so we need to check
+		return (nodeX - 1) + (nodeY * 2 * this.gridWidth)
 	}
 
 	private getRightEdge(nodeX: number, nodeY: number): number {
@@ -196,31 +205,31 @@ export default class Game implements Model {
 		return nodeX + (nodeY * 2 + 1) * this.gridWidth;
 	}
 
-	private checkLeftEdge(nodeX: number, nodeY: number): boolean {
-		return this.gridEdges.has(this.getLeftEdge(nodeX, nodeY));
+	checkLeftEdge(nodeX: number, nodeY: number): boolean {
+		return this.gridEdges.has(this.getLeftEdge(nodeX, nodeY))
 	}
 
-	private checkRightEdge(nodeX: number, nodeY: number): boolean {
-		return this.gridEdges.has(this.getRightEdge(nodeX, nodeY));
+	checkRightEdge(nodeX: number, nodeY: number): boolean {
+		return this.gridEdges.has(this.getRightEdge(nodeX, nodeY))
 	}
 
-	private checkTopEdge(nodeX: number, nodeY: number): boolean {
-		return this.gridEdges.has(this.getTopEdge(nodeX, nodeY));
+	checkTopEdge(nodeX: number, nodeY: number): boolean {
+		return this.gridEdges.has(this.getTopEdge(nodeX, nodeY))
 	}
 
-	private checkBottomEdge(nodeX: number, nodeY: number): boolean {
-		return this.gridEdges.has(this.getBottomEdge(nodeX, nodeY));
+	checkBottomEdge(nodeX: number, nodeY: number): boolean {
+		return this.gridEdges.has(this.getBottomEdge(nodeX, nodeY))
 	}
 
 	checkWinCondition(playerNode: Cell, playerGoal: Cell[]): boolean {
-		const toDo: Cell[] = [{ x: playerNode.x, y: playerNode.y }];
-		const done: Cell[] = [];
+		// adding starting player position
+		const toDo: Cell[] = [{x: playerNode.x, y:playerNode.y}]
+		const done: Cell[] = []
 
 		while (toDo.length > 0) {
-			const node = toDo.pop();
-			if (node !== undefined) {
-				// typescript cancer
-				done.push(node);
+			const node = toDo.pop()
+			if (node !== undefined) { // node can't be undefined, but precompiler don't know this
+				done.push(node)
 				for (const adjustedNode of this.adjustedNodes(node)) {
 					if (playerGoal.find(goal => areCellsEqual(goal, adjustedNode))) {
 						return true;
@@ -263,15 +272,15 @@ export default class Game implements Model {
 			//const node = toDoSet.values().next().value
 			const node = [...toDoSet].pop();
 
-			if (node !== undefined) {
-				toDoSet.delete(node);
-				doneSet.add(node);
+			if (node !== undefined) { // node can't be undefined, but precompiler don't know this
+				toDoSet.delete(node)
+				doneSet.add(node)
 				for (const adjustedNode of this.adjustedNodesStr(node)) {
 					if (playerGoal.has(adjustedNode)) {
 						return true;
 					}
-					if (!doneSet.has(adjustedNode)) {
-						toDoSet.add(adjustedNode);
+					if (!doneSet.has(adjustedNode)) { // here we don't need duplicate check, as we're using set
+						toDoSet.add(adjustedNode)
 					}
 				}
 			}
@@ -284,8 +293,9 @@ export default class Game implements Model {
 		const x = parseInt(node[0]);
 		const y = parseInt(node[1]);
 
-		if (this.checkTopEdge(x, y)) {
-			nodes.push(x + '' + (y - 1));
+		if(this.checkTopEdge(x, y)) {
+			// this is not very readable, but should be one of the fastest way to convert int to string
+			nodes.push(x + "" + (y - 1))
 		}
 		if (this.checkLeftEdge(x, y)) {
 			nodes.push(x - 1 + '' + y);
@@ -307,8 +317,8 @@ export default class Game implements Model {
 			const x = i % this.gridWidth;
 			const y = (i - x) / this.gridWidth;
 
-			// removing rightmost horizontal edges, as they newer will exist
-			const isRedundantEdge = y % 2 == 0 && x == this.gridWidth - 1;
+			// removing rightmost horizontal edges, as they will newer exist
+			const isRedundantEdge = (y % 2 == 0) && (x == (this.gridWidth - 1))
 
 			if (!isRedundantEdge) {
 				this.gridEdges.add(i);
@@ -318,11 +328,12 @@ export default class Game implements Model {
 
 	private initializeWalls(): void {
 		for (let i = 0; i < this.gridWidth - 1; i++) {
-			for (let j = 0; j < this.gridWidth - 1; j++) {
-				const wallH = ''.concat(String(i), String(j), 'h');
-				const wallV = ''.concat(String(i), String(j), 'v');
-				this.wallsAvailable.add(wallV);
-				this.wallsAvailable.add(wallH);
+			for (let j = 0; j < this.gridWidth - 1; j++){
+				// we have wall to string conversion, but here we're using this to avoid object creation
+				const wallH = "".concat(String(i), String(j), "h")
+				const wallV = "".concat(String(i), String(j), "v")
+				this.wallsAvailable.add(wallV)
+				this.wallsAvailable.add(wallH)
 			}
 		}
 	}
@@ -349,7 +360,8 @@ export default class Game implements Model {
 					}
 				}
 			} else {
-				moveSet.push({ newPosition: { x: position.x, y: position.y - 1 } });
+				// moving one cell forward
+				moveSet.push({newPosition: {x: position.x, y: position.y - 1}})
 			}
 		}
 
@@ -408,8 +420,9 @@ export default class Game implements Model {
 	}
 
 	showGameState() {
-		const stateSize = this.gridWidth * 2 - 1;
-		const state = new Array(stateSize).fill(0).map(() => new Array(stateSize).fill('0')); // i love js
+		const stateSize = this.gridWidth * 2 - 1 // or rather, state width, that's why we do -1
+		// it's really hard to initialize 2d array in js
+		const state = new Array(stateSize).fill(0).map(() => new Array(stateSize).fill("0"))
 
 		for (let i = 0; i < this.gridWidth; i++) {
 			for (let j = 0; j < this.gridWidth; j++) {
