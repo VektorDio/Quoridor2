@@ -1,58 +1,49 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import Game from "./model/Game.ts";
+import './App.css';
+import Game from './model/Game.ts';
+import Board from './components/Board';
+import React, { createContext, useMemo, useReducer } from 'react';
+import { reducer } from './reducer';
+import { Action } from './reducer/type';
+import PlayerCard from './components/PlayerCard/index.tsx';
+import { getColor } from './utils';
 
-function App() {
-	const [count, setCount] = useState(0)
-
-	const game = new Game()
-
-	//console.log(game)
-	// try {
-	// 	game.executeMove({position: "31h", removedWalls: []})
-	// } catch (e) {
-	// 	// @ts-ignore
-	// 	console.log(e.message)
-	// }
-
-	//game.executeMove({newX: 4, newY: 0})
-	//game.executeMove({newX: 4, newY: 1})
-	//game.executeMove({newX: 4, newY: 1})
-	game.executeMove({position: "37v", removedWalls: []})
-	game.executeMove({position: "47h", removedWalls: []})
-	//game.executeMove({position: "41h", removedWalls: []})
-	// console.log(game.showGameState())
-	// game.undoLastMove()
-	console.log(game.showGameState())
-	//console.log(game)
-	console.log(game.possiblePlayerMoves())
-
-	return (
-		<>
-			<div>
-				<a href="https://vitejs.dev" target="_blank">
-					<img src={viteLogo} className="logo" alt="Vite logo" />
-				</a>
-				<a href="https://react.dev" target="_blank">
-					<img src={reactLogo} className="logo react" alt="React logo" />
-				</a>
-			</div>
-			<h1>Vite + React</h1>
-			<div className="card">
-				<button onClick={() => setCount(prev => prev + 1)}>
-          count is {count}
-				</button>
-				<p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-				</p>
-			</div>
-			<p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-			</p>
-		</>
-	)
+export interface Context {
+	state: Game;
+	dispatch: React.Dispatch<Action>;
 }
 
-export default App
+const game = new Game();
+
+export const GameContext = createContext<Context>({
+	state: {} as Game,
+	dispatch: () => {}
+});
+
+
+function App() {
+	const [state, dispatch] = useReducer(reducer, game);
+
+	return useMemo(() => {
+		return (
+			<GameContext.Provider value={{ state, dispatch }}>
+				<div className="flex flex-nowrap items-end justify-between">
+					<div className="main-col w-1/4 text-center">
+						{state.players.map((player, idx) => {
+							return (
+								<PlayerCard
+									color={getColor(idx)}
+									wallsAmount={player.walls}
+									isTurn={player === state.getCurrentPlayer()}
+								/>
+							);
+						})}
+					</div>
+					<Board board={Array(state.gridWidth).fill(Array(state.gridWidth).fill('0'))}></Board>
+					<div className="main-col w-1/4"></div>
+				</div>
+			</GameContext.Provider>
+		);
+	}, [JSON.stringify(state.moveHistory)]);
+}
+
+export default App;
