@@ -4,7 +4,6 @@ import Node from "./Node.ts";
 import NodeHeap from "./BinaryHeap.ts";
 
 export default function jps(start: Cell, end: Cell, game: Game) {
-	const diagnostic = false
 	const grid = []
 	// Initializing grid
 	for (let i = 0; i < game.gridWidth; i++) {
@@ -20,11 +19,7 @@ export default function jps(start: Cell, end: Cell, game: Game) {
 	// Adding start node to heap
 	heap.add(grid[start.y][start.x])
 
-	let iterations = 0
-	let neighboursChecked = 0
-
 	while(heap.getSize() > 0) {
-		iterations++
 		// Grab the lowest f(x) to process next.
 		const currentNode = heap.remove() as Node
 
@@ -36,7 +31,6 @@ export default function jps(start: Cell, end: Cell, game: Game) {
 				ret.push(curr);
 				curr = curr.parent;
 			}
-			diagnostic && console.log({iterations, neighboursChecked})
 			return ret.reverse();
 		}
 
@@ -47,8 +41,7 @@ export default function jps(start: Cell, end: Cell, game: Game) {
 
 		for (let i = 0; i < neighbours.length; i++) {
 			const neighbour = neighbours[i]
-
-			const jumpPoint = jump(neighbour[0], neighbour[1], currentNode.x, currentNode.y, grid, game, end)
+			const jumpPoint = jump(neighbour[0], neighbour[1], currentNode.x, currentNode.y, game, end)
 
 			if (jumpPoint) {
 				const [ jx, jy ] = jumpPoint
@@ -58,8 +51,6 @@ export default function jps(start: Cell, end: Cell, game: Game) {
 					// Skipping iteration
 					continue
 				}
-
-				neighboursChecked++
 
 				const d = octileDistance(Math.abs(jx - currentNode.x), Math.abs(jy - currentNode.y))
 				const ng = currentNode.g + d // next `g` value
@@ -80,7 +71,6 @@ export default function jps(start: Cell, end: Cell, game: Game) {
 			}
 		}
 	}
-	diagnostic && console.log({iterations, neighboursChecked})
 	// No result was found
 	return []
 }
@@ -90,43 +80,45 @@ function octileDistance(dx: number, dy: number) {
 	return (dx < dy) ? F * dx + dy : F * dy + dx;
 }
 
-function jump(x: number, y: number, px: number, py: number, grid: Node[][], game: Game, endNode: Cell) {
+function jump(x: number, y: number, px: number, py: number, game: Game, endNode: Cell): [x: number, y: number] | null {
 	const dx = x - px, dy = y - py;
-
-	if (!grid[y] || !grid[y][x]) return null
 
 	if (x === endNode.x && y === endNode.y) {
 		return [x, y];
 	}
 
+	function checkHorizontal(xv: number, yv: number) {
+		return dx === 1 ? game.checkRightEdge(xv, yv) : game.checkLeftEdge(xv, yv)
+	}
+
+	function checkVertical(xv: number, yv: number) {
+		return dy === 1 ? game.checkBottomEdge(xv, yv) : game.checkTopEdge(xv, yv)
+	}
+
 	if (dx !== 0) {
-		if (dx === 1) {
-			if ((game.checkTopEdge(x, y) && !(game.checkRightEdge(x - dx, y - 1))) ||
-				(game.checkBottomEdge(x, y) && !(game.checkRightEdge(x - dx, y + 1)))) {
-				return [x, y];
-			}
-		} else {
-			if ((game.checkTopEdge(x, y) && !(game.checkLeftEdge(x - dx, y - 1))) ||
-				(game.checkBottomEdge(x, y) && !(game.checkLeftEdge(x - dx, y + 1)))) {
-				return [x, y];
-			}
+		// top right or left cell is blocked from at least one side
+		const topCheck = !checkHorizontal(x - dx, y - 1) || !game.checkBottomEdge(x - dx, y - 1)
+		// bottom right or left cell is blocked from at least one side
+		const bottomCheck = !checkHorizontal(x - dx,y + 1) || !game.checkTopEdge(x - dx, y + 1)
+
+		// Pruning rules
+		if ((game.checkTopEdge(x, y) && topCheck) || (game.checkBottomEdge(x, y) && bottomCheck)) {
+			return [x, y]
 		}
 	} else if (dy !== 0) {
-		if (dy === 1) {
-			if ((game.checkLeftEdge(x, y) && !(game.checkBottomEdge(x - 1, y - dy))) ||
-				(game.checkRightEdge(x, y) && !(game.checkBottomEdge(x + 1, y - dy)))) {
-				return [x, y];
-			}
-		} else {
-			if ((game.checkLeftEdge(x, y) && !(game.checkTopEdge(x - 1, y - dy))) ||
-				(game.checkRightEdge(x, y) && !(game.checkTopEdge(x + 1, y - dy)))) {
-				return [x, y];
-			}
+		// right bottom or top cell is blocked from at least one side
+		const topCheck = !checkVertical(x + 1, y - dy) || !game.checkLeftEdge(x + 1, y - dy)
+		// left bottom or top cell is blocked from at least one side
+		const bottomCheck = !checkVertical(x - 1,y - dy) || !game.checkRightEdge(x - 1, y - dy)
+
+		// Pruning rules
+		if ((game.checkRightEdge(x, y) && topCheck) || (game.checkLeftEdge(x, y) && bottomCheck)) {
+			return [x, y]
 		}
 
 		//When moving vertically, must check for horizontal jump points
-		if ((game.checkRightEdge(x, y) && jump(x + 1, y, x, y, grid, game, endNode)) ||
-			(game.checkLeftEdge(x, y) && jump(x - 1, y, x, y, grid, game, endNode))) {
+		if ((game.checkRightEdge(x, y) && jump(x + 1, y, x, y, game, endNode)) ||
+			(game.checkLeftEdge(x, y) && jump(x - 1, y, x, y, game, endNode))) {
 			return [x, y];
 		}
 	}
@@ -134,10 +126,15 @@ function jump(x: number, y: number, px: number, py: number, grid: Node[][], game
 		throw new Error("Only horizontal and vertical movements are allowed");
 	}
 
-	return jump(x + dx, y + dy, x, y, grid, game, endNode);
+	// Continue to jump in direction, discarding whole jump when facing a direct obstacle or map edge
+	if (dx !== 0) {
+		return checkHorizontal(x, y) ? jump(x + dx, y, x, y, game, endNode) : null;
+	} else {
+		return checkVertical(x, y) ? jump(x, y + dy, x, y, game, endNode) : null;
+	}
 }
 
-function findNeighbours(node: Node, game:  Game, grid: Node[][]) {
+function findNeighbours(node: Node, game: Game, grid: Node[][]) {
 	const { parent, x, y} = node
 	const neighbors = []
 
@@ -157,9 +154,9 @@ function findNeighbours(node: Node, game:  Game, grid: Node[][]) {
 				neighbors.push([x, y + 1]);
 			}
 			if (dx === 1 && game.checkRightEdge(x, y)) {
-				neighbors.push([x + dx, y]);
-			} else if (dx === -1 && game.checkLeftEdge(x, y)) {
-				neighbors.push([x + dx, y]);
+				neighbors.push([x + 1, y]);
+			} else if (game.checkLeftEdge(x, y)) {
+				neighbors.push([x - 1, y]);
 			}
 		} else if (dy !== 0) {
 			if (game.checkLeftEdge(x, y)) {
@@ -169,9 +166,9 @@ function findNeighbours(node: Node, game:  Game, grid: Node[][]) {
 				neighbors.push([x + 1, y]);
 			}
 			if (dy === 1 && game.checkBottomEdge(x, y)) {
-				neighbors.push([x, y + dy]);
-			} else if (dy === -1 && game.checkTopEdge(x, y)) {
-				neighbors.push([x, y + dy]);
+				neighbors.push([x, y + 1]);
+			} else if (game.checkTopEdge(x, y)) {
+				neighbors.push([x, y - 1]);
 			}
 		}
 	}
@@ -192,7 +189,7 @@ function findNeighbours(node: Node, game:  Game, grid: Node[][]) {
 		if(game.checkBottomEdge(x, y)) {
 			neighbourNodes.push(grid[y + 1][x])
 		}
-		
+
 		for (let i = 0; i < neighbourNodes.length; i++) {
 			const neighborNode = neighbourNodes[i];
 			neighbors.push([neighborNode.x, neighborNode.y]);
