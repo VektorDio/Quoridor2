@@ -1,78 +1,49 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import Game from "./model/Game.ts";
-import aStar from "./pathfinding/AStar.ts";
-import JPS from "./pathfinding/JPS.ts";
+import './App.css';
+import Game from './model/Game.ts';
+import Board from './components/Board';
+import React, { createContext, useMemo, useReducer } from 'react';
+import { reducer } from './reducer';
+import { Action } from './reducer/type';
+import PlayerCard from './components/PlayerCard/index.tsx';
+import { getColor } from './utils';
 
-function App() {
-	const [count, setCount] = useState(0)
-
-	const game = new Game()
-
-	// game.executeMove({newX: 4, newY: 0})
-	// game.executeMove({newX: 4, newY: 1})
-	// game.executeMove({newX: 4, newY: 1})
-	// game.executeMove({position: "11v", removedWalls: []})
-	// game.executeMove({position: "21h", removedWalls: []})
-	// game.executeMove({position: "07v", removedWalls: []})
-	// game.executeMove({position: "16v", removedWalls: []})
-	// game.executeMove({position: "32v", removedWalls: []})
-	// game.executeMove({position: "42v", removedWalls: []})
-	// game.executeMove({position: "52h", removedWalls: []})
-	// game.executeMove({position: "03h", removedWalls: []})
-	// game.executeMove({position: "23h", removedWalls: []})
-	// game.executeMove({position: "63h", removedWalls: []})
-	// game.executeMove({position: "14h", removedWalls: []})
-	// game.executeMove({position: "54h", removedWalls: []})
-	// game.executeMove({position: "74h", removedWalls: []})
-	// game.executeMove({position: "25h", removedWalls: []})
-	// game.executeMove({position: "35v", removedWalls: []})
-	// game.executeMove({position: "45v", removedWalls: []})
-	// game.executeMove({position: "70v", removedWalls: []})
-	// game.executeMove({position: "61v", removedWalls: []})
-	// game.executeMove({position: "65h", removedWalls: []})
-	// game.executeMove({position: "66v", removedWalls: []})
-	// console.log(game.showGameState())
-	// game.undoLastMove()
-	// console.log(game.showGameState())
-	// console.log(game)
-	// console.log(game.possiblePlayerMoves())
-	const startTime = performance.now()
-	console.log(aStar({x:0,y:8}, {x:8,y:0}, game))
-	const endTime = performance.now()
-	console.log(`Astar took ${endTime - startTime} milliseconds`)
-
-	const startTime2 = performance.now()
-	console.log(JPS({x:8,y:0}, {x:0,y:8}, game))
-	const endTime2 = performance.now()
-	console.log(`JPS took ${endTime2 - startTime2} milliseconds`)
-
-	return (
-		<>
-			<div>
-				<a href="https://vitejs.dev" target="_blank">
-					<img src={viteLogo} className="logo" alt="Vite logo" />
-				</a>
-				<a href="https://react.dev" target="_blank">
-					<img src={reactLogo} className="logo react" alt="React logo" />
-				</a>
-			</div>
-			<h1>Vite + React</h1>
-			<div className="card">
-				<button onClick={() => setCount(prev => prev + 1)}>
-          count is {count}
-				</button>
-				<p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-				</p>
-			</div>
-			<p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-			</p>
-		</>
-	)
+export interface Context {
+	state: Game;
+	dispatch: React.Dispatch<Action>;
 }
 
-export default App
+const game = new Game();
+
+export const GameContext = createContext<Context>({
+	state: {} as Game,
+	dispatch: () => {}
+});
+
+
+function App() {
+	const [state, dispatch] = useReducer(reducer, game);
+
+	return useMemo(() => {
+		return (
+			<GameContext.Provider value={{ state, dispatch }}>
+				<div className="flex flex-nowrap items-end justify-between">
+					<div className="main-col w-1/4 text-center">
+						{state.players.map((player, idx) => {
+							return (
+								<PlayerCard
+									color={getColor(idx)}
+									wallsAmount={player.walls}
+									isTurn={player === state.getCurrentPlayer()}
+								/>
+							);
+						})}
+					</div>
+					<Board board={Array(state.gridWidth).fill(Array(state.gridWidth).fill('0'))}></Board>
+					<div className="main-col w-1/4"></div>
+				</div>
+			</GameContext.Provider>
+		);
+	}, [JSON.stringify(state.moveHistory)]);
+}
+
+export default App;

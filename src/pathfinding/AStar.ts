@@ -4,6 +4,7 @@ import Node from "./Node.ts";
 import Game from "../model/Game.ts";
 
 export default function aStar(start: Cell, end: Cell, game: Game) {
+	const diagnostic = false
 	const grid = []
 	// Initializing grid
 	for (let i = 0; i < game.gridWidth; i++) {
@@ -84,7 +85,6 @@ export default function aStar(start: Cell, end: Cell, game: Game) {
 			}
 		}
 	}
-
 	// No result was found
 	return []
 }
