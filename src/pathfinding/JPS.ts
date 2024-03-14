@@ -4,7 +4,6 @@ import Node from "./Node.ts";
 import NodeHeap from "./BinaryHeap.ts";
 
 export default function jps(start: Cell, end: Cell, game: Game) {
-	const diagnostic = false
 	const grid = []
 	// Initializing grid
 	for (let i = 0; i < game.gridWidth; i++) {
@@ -20,11 +19,7 @@ export default function jps(start: Cell, end: Cell, game: Game) {
 	// Adding start node to heap
 	heap.add(grid[start.y][start.x])
 
-	let iterations = 0
-	let neighboursChecked = 0
-
 	while(heap.getSize() > 0) {
-		iterations++
 		// Grab the lowest f(x) to process next.
 		const currentNode = heap.remove() as Node
 
@@ -36,7 +31,6 @@ export default function jps(start: Cell, end: Cell, game: Game) {
 				ret.push(curr);
 				curr = curr.parent;
 			}
-			diagnostic && console.log({iterations, neighboursChecked})
 			return ret.reverse();
 		}
 
@@ -47,7 +41,6 @@ export default function jps(start: Cell, end: Cell, game: Game) {
 
 		for (let i = 0; i < neighbours.length; i++) {
 			const neighbour = neighbours[i]
-
 			const jumpPoint = jump(neighbour[0], neighbour[1], currentNode.x, currentNode.y, game, end)
 
 			if (jumpPoint) {
@@ -58,8 +51,6 @@ export default function jps(start: Cell, end: Cell, game: Game) {
 					// Skipping iteration
 					continue
 				}
-
-				neighboursChecked++
 
 				const d = octileDistance(Math.abs(jx - currentNode.x), Math.abs(jy - currentNode.y))
 				const ng = currentNode.g + d // next `g` value
@@ -80,7 +71,6 @@ export default function jps(start: Cell, end: Cell, game: Game) {
 			}
 		}
 	}
-	diagnostic && console.log({iterations, neighboursChecked})
 	// No result was found
 	return []
 }

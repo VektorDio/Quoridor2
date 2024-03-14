@@ -19,11 +19,7 @@ export default function aStar(start: Cell, end: Cell, game: Game) {
 	// Adding start node to heap
 	heap.add(grid[start.y][start.x])
 
-	let iterations = 0
-	let neighboursChecked = 0
-
 	while(heap.getSize() > 0) {
-		iterations++
 		// Grab the lowest f(x) to process next.
 		const currentNode = heap.remove() as Node
 
@@ -35,7 +31,6 @@ export default function aStar(start: Cell, end: Cell, game: Game) {
 				ret.push(curr);
 				curr = curr.parent;
 			}
-			console.log({iterations, neighboursChecked})
 			return ret.reverse(); // ?
 		}
 
@@ -66,8 +61,6 @@ export default function aStar(start: Cell, end: Cell, game: Game) {
 				continue
 			}
 
-			neighboursChecked++
-
 			// The g score is the shortest distance from start to current node.
 			// We need to check if the path we have arrived at this neighbor is the shortest one we have seen yet.
 			const gScore = currentNode.g + 1 // Adding one, as all cells has equal cost
@@ -91,7 +84,7 @@ export default function aStar(start: Cell, end: Cell, game: Game) {
 			}
 		}
 	}
-	console.log({iterations, neighboursChecked})
+
 	// No result was found
 	return []
 }
