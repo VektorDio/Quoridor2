@@ -9,12 +9,6 @@ const ACTIONS: Record<ActionTypes, (state: Game, value: Move) => any> = {
 		if(isPlayerMove(value)) {
 			const { newPosition, previousPosition } = value
 			state.executeMove({ previousPosition, newPosition })
-
-			const botMove = getNextMove(state)
-			if (botMove) {
-				state.executeMove(botMove)
-			}
-
 			return deepCopy(state)
 		}
 	},
@@ -28,11 +22,6 @@ const ACTIONS: Record<ActionTypes, (state: Game, value: Move) => any> = {
 				// error
 			}
 
-			const botMove = getNextMove(state)
-			if (botMove) {
-				state.executeMove(botMove)
-			}
-
 			return deepCopy(state)
 		}
 	},
@@ -44,5 +33,12 @@ const ACTIONS: Record<ActionTypes, (state: Game, value: Move) => any> = {
 
 export const reducer = (state: Game, action: Action): Game => {
 	const actionFunction = ACTIONS[action.type]
-	return actionFunction(state, action.value)
+	const newState = actionFunction(state, action.value)
+
+	const botMove = getNextMove(newState)
+	if (botMove) {
+		newState.executeMove(botMove)
+	}
+
+	return deepCopy(newState)
 }
