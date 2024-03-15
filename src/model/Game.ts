@@ -1,7 +1,7 @@
 import Model from './Model.ts';
 import { isPlayerMove, Move, MovePlayer, MoveWall } from './Move.ts';
 import { Player } from './Player.ts';
-import { areCellsEqual, Cell } from './Cell.ts';
+import { Cell } from './Cell.ts';
 import { Orientation, wallFromString, wallToString } from './Wall.ts';
 
 export default class Game implements Model {
@@ -14,34 +14,12 @@ export default class Game implements Model {
 		{
 			position: { x: 4, y: 8 },
 			walls: 10,
-			goal: [
-				{ x: 0, y: 0 },
-				{ x: 1, y: 0 },
-				{ x: 2, y: 0 },
-				{ x: 3, y: 0 },
-				{ x: 4, y: 0 },
-				{ x: 5, y: 0 },
-				{ x: 6, y: 0 },
-				{ x: 7, y: 0 },
-				{ x: 8, y: 0 }
-			],
-			goalStr: new Set(['00', '10', '20', '30', '40', '50', '60', '70', '80'])
+			goal: new Set(["00","10","20","30","40","50","60","70",'80'])
 		},
 		{
 			position: { x: 4, y: 0 },
 			walls: 10,
-			goal: [
-				{ x: 0, y: 8 },
-				{ x: 1, y: 8 },
-				{ x: 2, y: 8 },
-				{ x: 3, y: 8 },
-				{ x: 4, y: 8 },
-				{ x: 5, y: 8 },
-				{ x: 6, y: 8 },
-				{ x: 7, y: 8 },
-				{ x: 8, y: 8 }
-			],
-			goalStr: new Set(['08', '18', '28', '38', '48', '58', '68', '78', '88'])
+			goal: new Set(["08","18","28","38","48","58","68","78","88"])
 		}
 	];
 
@@ -106,7 +84,6 @@ export default class Game implements Model {
 			throw new Error('Wall blocks someone`s path');
 		}
 
-
 		currentPlayer.walls -= 1 // reducing player wall counter
 		this.wallsAvailable.delete(move.position)
 
@@ -122,6 +99,9 @@ export default class Game implements Model {
 			wall3 = wallToString({ position: { x, y }, orientation: Orientation.Horizontal });
 		}
 
+		if (!move.removedWalls) {
+			move.removedWalls = []
+		}
 		// mutating variable again
 		if (this.wallsAvailable.has(wall1)) {
 			this.wallsAvailable.delete(wall1);
@@ -154,7 +134,7 @@ export default class Game implements Model {
 					orientation
 				} = wallFromString(lastMove.position);
 				// restore available moves
-				lastMove.removedWalls.forEach(e => this.wallsAvailable.add(e));
+				lastMove.removedWalls?.forEach(e => this.wallsAvailable.add(e));
 
 				this.wallsAvailable.add(lastMove.position) // adding wall back to the pool
 
@@ -205,68 +185,67 @@ export default class Game implements Model {
 		return nodeX + (nodeY * 2 + 1) * this.gridWidth;
 	}
 
-	checkLeftEdge(nodeX: number, nodeY: number): boolean {
+	checkWalkableLeft(nodeX: number, nodeY: number): boolean {
 		return this.gridEdges.has(this.getLeftEdge(nodeX, nodeY))
 	}
 
-	checkRightEdge(nodeX: number, nodeY: number): boolean {
+	checkWalkableRight(nodeX: number, nodeY: number): boolean {
 		return this.gridEdges.has(this.getRightEdge(nodeX, nodeY))
 	}
 
-	checkTopEdge(nodeX: number, nodeY: number): boolean {
+	checkWalkableTop(nodeX: number, nodeY: number): boolean {
 		return this.gridEdges.has(this.getTopEdge(nodeX, nodeY))
 	}
 
-	checkBottomEdge(nodeX: number, nodeY: number): boolean {
+	checkWalkableBottom(nodeX: number, nodeY: number): boolean {
 		return this.gridEdges.has(this.getBottomEdge(nodeX, nodeY))
 	}
 
-	checkWinCondition(playerNode: Cell, playerGoal: Cell[]): boolean {
-		// adding starting player position
-		const toDo: Cell[] = [{x: playerNode.x, y:playerNode.y}]
-		const done: Cell[] = []
+	// checkWinCondition(playerNode: Cell, playerGoal: Cell[]): boolean {
+	// 	// adding starting player position
+	// 	const toDoArray: Cell[] = [{x: playerNode.x, y:playerNode.y}]
+	// 	const doneArray: Cell[] = []
+	//
+	// 	while (toDoArray.length > 0) {
+	// 		const node = toDoArray.pop()
+	// 		if (node !== undefined) { // node can't be undefined, but precompiler don't know this
+	// 			doneArray.push(node)
+	// 			for (const adjustedNode of this.adjustedNodes(node)) {
+	// 				if (playerGoal.find(goal => areCellsEqual(goal, adjustedNode))) {
+	// 					return true
+	// 				}
+	// 				if (doneArray.find(doneNode => areCellsEqual(doneNode, adjustedNode)) === undefined &&
+	// 					toDoArray.find(doneNode => areCellsEqual(doneNode, adjustedNode)) === undefined) {
+	// 					toDoArray.push(adjustedNode)
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// 	return false
+	// }
+	//
+	// private adjustedNodes(node: Cell): Cell[] {
+	// 	const nodes = []
+	// 	if(this.checkWalkableTop(node.x, node.y)) {
+	// 		nodes.push({x: node.x, y: node.y - 1})
+	// 	}
+	// 	if(this.checkWalkableLeft(node.x, node.y)) {
+	// 		nodes.push({x: node.x - 1, y: node.y})
+	// 	}
+	// 	if(this.checkWalkableRight(node.x, node.y)) {
+	// 		nodes.push({x: node.x + 1, y: node.y})
+	// 	}
+	// 	if(this.checkWalkableBottom(node.x, node.y)) {
+	// 		nodes.push({x: node.x, y: node.y + 1})
+	// 	}
+	// 	return nodes
+	// }
 
-		while (toDo.length > 0) {
-			const node = toDo.pop()
-			if (node !== undefined) { // node can't be undefined, but precompiler don't know this
-				done.push(node)
-				for (const adjustedNode of this.adjustedNodes(node)) {
-					if (playerGoal.find(goal => areCellsEqual(goal, adjustedNode))) {
-						return true;
-					}
-					if (
-						done.find(doneNode => areCellsEqual(doneNode, adjustedNode)) === undefined &&
-						toDo.find(doneNode => areCellsEqual(doneNode, adjustedNode)) === undefined
-					) {
-						toDo.push(adjustedNode);
-					}
-				}
-			}
-		}
-		return false;
-	}
-
-	private adjustedNodes(node: Cell): Cell[] {
-		const nodes = [];
-		if (this.checkTopEdge(node.x, node.y)) {
-			nodes.push({ x: node.x, y: node.y - 1 });
-		}
-		if (this.checkLeftEdge(node.x, node.y)) {
-			nodes.push({ x: node.x - 1, y: node.y });
-		}
-		if (this.checkRightEdge(node.x, node.y)) {
-			nodes.push({ x: node.x + 1, y: node.y });
-		}
-		if (this.checkBottomEdge(node.x, node.y)) {
-			nodes.push({ x: node.x, y: node.y + 1 });
-		}
-		return nodes;
-	}
-
-	checkWinConditionStr(playerNode: Cell, playerGoal: Set<string>): boolean {
+	checkWinCondition(playerNode: Cell, playerGoal: Set<string>): boolean {
 		const toDoSet: Set<string> = new Set();
 		const doneSet: Set<string> = new Set();
 		toDoSet.add(playerNode.x + '' + playerNode.y);
+
 
 		while (toDoSet.size > 0) {
 			//const node = toDoSet.values().next().value
@@ -275,7 +254,7 @@ export default class Game implements Model {
 			if (node !== undefined) { // node can't be undefined, but precompiler don't know this
 				toDoSet.delete(node)
 				doneSet.add(node)
-				for (const adjustedNode of this.adjustedNodesStr(node)) {
+				for (const adjustedNode of this.adjustedNodes(node)) {
 					if (playerGoal.has(adjustedNode)) {
 						return true;
 					}
@@ -288,12 +267,12 @@ export default class Game implements Model {
 		return false;
 	}
 
-	private adjustedNodesStr(node: string): string[] {
+	private adjustedNodes(node: string): string[] {
 		const nodes = [];
 		const x = parseInt(node[0]);
 		const y = parseInt(node[1]);
 
-		if(this.checkTopEdge(x, y)) {
+		if(this.checkWalkableTop(x, y)) {
 			// this is not very readable, but should be one of the fastest way to convert int to string
 			nodes.push(x + "" + (y - 1))
 		}
@@ -343,18 +322,18 @@ export default class Game implements Model {
 		const { position } = this.getCurrentPlayer();
 		const { position: nextPlayerPos } = this.getOtherPlayer();
 
-		if (this.checkTopEdge(position.x, position.y)) {
+		if (this.checkWalkableTop(position.x, position.y)) {
 			// check if there is another player above
 			if (position.x === nextPlayerPos.x && position.y === nextPlayerPos.y + 1) {
-				if (this.checkTopEdge(nextPlayerPos.x, nextPlayerPos.y)) {
+				if (this.checkWalkableTop(nextPlayerPos.x, nextPlayerPos.y)) {
 					// jump over other player
 					moveSet.push({ newPosition: { x: position.x, y: position.y - 2 } });
 				} else {
-					if (this.checkLeftEdge(nextPlayerPos.x, nextPlayerPos.y)) {
+					if (this.checkWalkableLeft(nextPlayerPos.x, nextPlayerPos.y)) {
 						// jump left to the other player
 						moveSet.push({ newPosition: { x: position.x - 1, y: position.y - 1 } });
 					}
-					if (this.checkRightEdge(nextPlayerPos.x, nextPlayerPos.y)) {
+					if (this.checkWalkableRight(nextPlayerPos.x, nextPlayerPos.y)) {
 						// jump right to the other player
 						moveSet.push({ newPosition: { x: position.x + 1, y: position.y - 1 } });
 					}
@@ -365,16 +344,16 @@ export default class Game implements Model {
 			}
 		}
 
-		if (this.checkRightEdge(position.x, position.y)) {
+		if (this.checkWalkableRight(position.x, position.y)) {
 			if (position.x === nextPlayerPos.x - 1 && position.y === nextPlayerPos.y) {
-				if (this.checkRightEdge(nextPlayerPos.x, nextPlayerPos.y)) {
-					moveSet.push({ newPosition: { x: position.x + 2, y: position.y } });
+				if (this.checkWalkableRight(nextPlayerPos.x, nextPlayerPos.y)) {
+					moveSet.push({newPosition: {x: position.x + 2, y: position.y}});
 				} else {
-					if (this.checkTopEdge(nextPlayerPos.x, nextPlayerPos.y)) {
-						moveSet.push({ newPosition: { x: position.x + 1, y: position.y - 1 } });
+					if (this.checkWalkableTop(nextPlayerPos.x, nextPlayerPos.y)) {
+						moveSet.push({newPosition: {x: position.x + 1, y: position.y - 1}});
 					}
-					if (this.checkBottomEdge(nextPlayerPos.x, nextPlayerPos.y)) {
-						moveSet.push({ newPosition: { x: position.x + 1, y: position.y + 1 } });
+					if (this.checkWalkableBottom(nextPlayerPos.x, nextPlayerPos.y)) {
+						moveSet.push({newPosition: {x: position.x + 1, y: position.y + 1}});
 					}
 				}
 			} else {
@@ -382,16 +361,16 @@ export default class Game implements Model {
 			}
 		}
 
-		if (this.checkLeftEdge(position.x, position.y)) {
+		if (this.checkWalkableLeft(position.x, position.y)) {
 			if (position.x === nextPlayerPos.x + 1 && position.y === nextPlayerPos.y) {
-				if (this.checkLeftEdge(nextPlayerPos.x, nextPlayerPos.y)) {
-					moveSet.push({ newPosition: { x: position.x - 2, y: position.y } });
+				if (this.checkWalkableLeft(nextPlayerPos.x, nextPlayerPos.y)) {
+					moveSet.push({newPosition: {x: position.x - 2, y: position.y}});
 				} else {
-					if (this.checkTopEdge(nextPlayerPos.x, nextPlayerPos.y)) {
-						moveSet.push({ newPosition: { x: position.x - 1, y: position.y - 1 } });
+					if (this.checkWalkableTop(nextPlayerPos.x, nextPlayerPos.y)) {
+						moveSet.push({newPosition: {x: position.x - 1, y: position.y - 1}});
 					}
-					if (this.checkBottomEdge(nextPlayerPos.x, nextPlayerPos.y)) {
-						moveSet.push({ newPosition: { x: position.x - 1, y: position.y + 1 } });
+					if (this.checkWalkableBottom(nextPlayerPos.x, nextPlayerPos.y)) {
+						moveSet.push({newPosition: {x: position.x - 1, y: position.y + 1}});
 					}
 				}
 			} else {
@@ -399,16 +378,16 @@ export default class Game implements Model {
 			}
 		}
 
-		if (this.checkBottomEdge(position.x, position.y)) {
-			if (position.x === nextPlayerPos.x && position.y === nextPlayerPos.y - 1) {
-				if (this.checkBottomEdge(nextPlayerPos.x, nextPlayerPos.y)) {
-					moveSet.push({ newPosition: { x: position.x, y: position.y + 2 } });
+		if (this.checkWalkableBottom(position.x, position.y)) {
+			if (position.x === nextPlayerPos.x && position.y === (nextPlayerPos.y - 1)) {
+				if (this.checkWalkableBottom(nextPlayerPos.x, nextPlayerPos.y)) {
+					moveSet.push({newPosition: {x: position.x, y: position.y + 2}});
 				} else {
-					if (this.checkLeftEdge(nextPlayerPos.x, nextPlayerPos.y)) {
-						moveSet.push({ newPosition: { x: position.x - 1, y: position.y + 1 } });
+					if (this.checkWalkableLeft(nextPlayerPos.x, nextPlayerPos.y)) {
+						moveSet.push({newPosition: {x: position.x - 1, y: position.y + 1}});
 					}
-					if (this.checkRightEdge(nextPlayerPos.x, nextPlayerPos.y)) {
-						moveSet.push({ newPosition: { x: position.x + 1, y: position.y + 1 } });
+					if (this.checkWalkableRight(nextPlayerPos.x, nextPlayerPos.y)) {
+						moveSet.push({newPosition: {x: position.x + 1, y: position.y + 1}});
 					}
 				}
 			} else {
