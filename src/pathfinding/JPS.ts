@@ -20,11 +20,7 @@ export default function jps(start: Cell, end: Cell, model: Model) {
 	// Adding start node to heap
 	heap.add(grid[start.y][start.x])
 
-	let iterations = 0
-	let neighboursChecked = 0
-
 	while(heap.getSize() > 0) {
-		iterations++
 		// Grab the lowest f(x) to process next.
 		const currentNode = heap.remove() as Node
 
@@ -36,7 +32,6 @@ export default function jps(start: Cell, end: Cell, model: Model) {
 				ret.push(curr);
 				curr = curr.parent;
 			}
-			diagnostic && console.log({iterations, neighboursChecked})
 			return ret.reverse();
 		}
 
@@ -47,8 +42,8 @@ export default function jps(start: Cell, end: Cell, model: Model) {
 
 		for (let i = 0; i < neighbours.length; i++) {
 			const neighbour = neighbours[i]
-
-			const jumpPoint = jump(neighbour[0], neighbour[1], currentNode.x, currentNode.y, grid, model, end)
+      
+			const jumpPoint = jump(neighbour[0], neighbour[1], currentNode.x, currentNode.y, model, end)
 
 			if (jumpPoint) {
 				const [ jx, jy ] = jumpPoint
@@ -58,8 +53,6 @@ export default function jps(start: Cell, end: Cell, model: Model) {
 					// Skipping iteration
 					continue
 				}
-
-				neighboursChecked++
 
 				const d = octileDistance(Math.abs(jx - currentNode.x), Math.abs(jy - currentNode.y))
 				const ng = currentNode.g + d // next `g` value
@@ -80,7 +73,6 @@ export default function jps(start: Cell, end: Cell, model: Model) {
 			}
 		}
 	}
-	diagnostic && console.log({iterations, neighboursChecked})
 	// No result was found
 	return []
 }
@@ -90,43 +82,45 @@ function octileDistance(dx: number, dy: number) {
 	return (dx < dy) ? F * dx + dy : F * dy + dx;
 }
 
-function jump(x: number, y: number, px: number, py: number, grid: Node[][], model: Model, endNode: Cell) {
+function jump(x: number, y: number, px: number, py: number, model: Model, endNode: Cell): [x: number, y: number] | null {
 	const dx = x - px, dy = y - py;
-
-	if (!grid[y] || !grid[y][x]) return null
 
 	if (x === endNode.x && y === endNode.y) {
 		return [x, y];
 	}
 
+	function checkHorizontal(xv: number, yv: number) {
+		return dx === 1 ? game.checkRightEdge(xv, yv) : game.checkLeftEdge(xv, yv)
+	}
+
+	function checkVertical(xv: number, yv: number) {
+		return dy === 1 ? game.checkBottomEdge(xv, yv) : game.checkTopEdge(xv, yv)
+	}
+
 	if (dx !== 0) {
-		if (dx === 1) {
-			if ((model.checkWalkableTop(x, y) && !(model.checkWalkableRight(x - dx, y - 1))) ||
-				(model.checkWalkableBottom(x, y) && !(model.checkWalkableRight(x - dx, y + 1)))) {
-				return [x, y];
-			}
-		} else {
-			if ((model.checkWalkableTop(x, y) && !(model.checkWalkableLeft(x - dx, y - 1))) ||
-				(model.checkWalkableBottom(x, y) && !(model.checkWalkableLeft(x - dx, y + 1)))) {
-				return [x, y];
-			}
+		// top right or left cell is blocked from at least one side
+		const topCheck = !checkHorizontal(x - dx, y - 1) || !game.checkBottomEdge(x - dx, y - 1)
+		// bottom right or left cell is blocked from at least one side
+		const bottomCheck = !checkHorizontal(x - dx,y + 1) || !game.checkTopEdge(x - dx, y + 1)
+
+		// Pruning rules
+		if ((game.checkWalkableTop(x, y) && topCheck) || (game.checkWalkableBottom(x, y) && bottomCheck)) {
+			return [x, y]
 		}
 	} else if (dy !== 0) {
-		if (dy === 1) {
-			if ((model.checkWalkableLeft(x, y) && !(model.checkWalkableBottom(x - 1, y - dy))) ||
-				(model.checkWalkableRight(x, y) && !(model.checkWalkableBottom(x + 1, y - dy)))) {
-				return [x, y];
-			}
-		} else {
-			if ((model.checkWalkableLeft(x, y) && !(model.checkWalkableTop(x - 1, y - dy))) ||
-				(model.checkWalkableRight(x, y) && !(model.checkWalkableTop(x + 1, y - dy)))) {
-				return [x, y];
-			}
+		// right bottom or top cell is blocked from at least one side
+		const topCheck = !checkVertical(x + 1, y - dy) || !game.checkWalkableLeft(x + 1, y - dy)
+		// left bottom or top cell is blocked from at least one side
+		const bottomCheck = !checkVertical(x - 1,y - dy) || !game.checkWalkableRight(x - 1, y - dy)
+
+		// Pruning rules
+		if ((game.checkWalkableRight(x, y) && topCheck) || (game.checkWalkableLeft(x, y) && bottomCheck)) {
+			return [x, y]
 		}
 
 		//When moving vertically, must check for horizontal jump points
-		if ((model.checkWalkableRight(x, y) && jump(x + 1, y, x, y, grid, model, endNode)) ||
-			(model.checkWalkableLeft(x, y) && jump(x - 1, y, x, y, grid, model, endNode))) {
+		if ((game.checkWalkableRight(x, y) && jump(x + 1, y, x, y, game, endNode)) ||
+			(game.checkWalkableLeft(x, y) && jump(x - 1, y, x, y, game, endNode))) {
 			return [x, y];
 		}
 	}
@@ -134,7 +128,12 @@ function jump(x: number, y: number, px: number, py: number, grid: Node[][], mode
 		throw new Error("Only horizontal and vertical movements are allowed");
 	}
 
-	return jump(x + dx, y + dy, x, y, grid, model, endNode);
+	// Continue to jump in direction, discarding whole jump when facing a direct obstacle or map edge
+	if (dx !== 0) {
+		return checkHorizontal(x, y) ? jump(x + dx, y, x, y, game, endNode) : null;
+	} else {
+		return checkVertical(x, y) ? jump(x, y + dy, x, y, game, endNode) : null;
+	}
 }
 
 function findNeighbours(node: Node, model: Model, grid: Node[][]) {
@@ -156,11 +155,13 @@ function findNeighbours(node: Node, model: Model, grid: Node[][]) {
 			if (model.checkWalkableBottom(x, y)) {
 				neighbors.push([x, y + 1]);
 			}
-			if (dx === 1 && model.checkWalkableRight(x, y)) {
-				neighbors.push([x + dx, y]);
-			} else if (dx === -1 && model.checkWalkableLeft(x, y)) {
-				neighbors.push([x + dx, y]);
+      
+			if (dx === 1 && game.checkWalkableRight(x, y)) {
+				neighbors.push([x + 1, y]);
+			} else if (game.checkWalkableLeft(x, y)) {
+				neighbors.push([x - 1, y]);
 			}
+      
 		} else if (dy !== 0) {
 			if (model.checkWalkableLeft(x, y)) {
 				neighbors.push([x - 1, y]);
@@ -168,11 +169,13 @@ function findNeighbours(node: Node, model: Model, grid: Node[][]) {
 			if (model.checkWalkableRight(x, y)) {
 				neighbors.push([x + 1, y]);
 			}
-			if (dy === 1 && model.checkWalkableBottom(x, y)) {
-				neighbors.push([x, y + dy]);
-			} else if (dy === -1 && model.checkWalkableTop(x, y)) {
-				neighbors.push([x, y + dy]);
+      
+			if (dy === 1 && game.checkWalkableBottom(x, y)) {
+				neighbors.push([x, y + 1]);
+			} else if (game.checkWalkableTop(x, y)) {
+				neighbors.push([x, y - 1]);
 			}
+      
 		}
 	}
 	// return all neighbors
@@ -192,7 +195,7 @@ function findNeighbours(node: Node, model: Model, grid: Node[][]) {
 		if(model.checkWalkableBottom(x, y)) {
 			neighbourNodes.push(grid[y + 1][x])
 		}
-		
+
 		for (let i = 0; i < neighbourNodes.length; i++) {
 			const neighborNode = neighbourNodes[i];
 			neighbors.push([neighborNode.x, neighborNode.y]);
