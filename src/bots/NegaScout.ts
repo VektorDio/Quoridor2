@@ -6,15 +6,15 @@ import aStar from "../pathfinding/AStar.ts";
 
 export default function getNextMove(game: Game): Move | undefined{
 	const color = game.playerIndex === 0 ? 1 : -1
-	const depth = 1 // from 1 to 8
+	const depth = 2 // from 1 to 8
 
 	// alpha and beta supposed to be book numbers
 	//const [score, move ] = pvs(depth, -999, 999, color, game)
 	const [score, move ] = negamax(depth, color, game)
 
 	if (move) {
-		console.log("Color: " + color + " Score: " + score)
-		console.log(isPlayerMove(move) ? move.newPosition : move.position)
+		//console.log("Color: " + color + " Score: " + score)
+		//console.log(isPlayerMove(move) ? move.newPosition : move.position)
 		return move
 	} else return undefined // no available moves
 }
@@ -76,8 +76,8 @@ function pvs(depth: number, a: number, b: number, color: number, game: Game): [n
 		if (a >= b) break
 	}
 
-	console.log("Depth: " + depth)
-	console.log(scores)
+	//console.log("Depth: " + depth)
+	//console.log(scores)
 
 	return [a, bestMove]
 }
@@ -110,7 +110,7 @@ export function evaluatePosition(game: Game) {
 export function getPossibleMoves(game: Game, depth: number) {
 	const possibleMoves = game.possiblePlayerMoves()
 
-	if (depth !== 2 && game.getCurrentPlayer().walls > 0) { // depth value should be tested and implemented properly
+	if (depth !== 4 && game.getCurrentPlayer().walls > 0) { // depth value should be tested and implemented properly
 		game.wallsAvailable.forEach(wall => possibleMoves.push({ position: wall, removedWalls: []}))
 	}
 
@@ -156,10 +156,10 @@ function negamax(depth: number, color: number, game: Game): [number, Move | unde
 
 		//scores.push(score)
 
-		console.log(
-			"Depth: " + depth +
-			" Move: " + (isPlayerMove(move) ? JSON.stringify(move.newPosition) : move.position) +
-			" Score: " + newScore)
+		// console.log(
+		// 	"Depth: " + depth +
+		// 	" Move: " + (isPlayerMove(move) ? JSON.stringify(move.newPosition) : move.position) +
+		// 	" Score: " + newScore)
 	}
 
 	// console.log("Depth: " + depth)
