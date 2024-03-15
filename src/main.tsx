@@ -1,13 +1,13 @@
 import ReactDOM from 'react-dom/client';
+import React from 'react';
 import App from './App.tsx';
 import './index.css';
-import ErrorBoundary from './components/ErrorBoundary/index.tsx';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-	<ErrorBoundary>
+	<React.Fragment>
 		<App />
 		<ToastContainer />
-	</ErrorBoundary>
+	</React.Fragment>
 );
