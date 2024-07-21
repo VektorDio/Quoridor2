@@ -4,7 +4,6 @@ import Node from "./Node.ts";
 import Model from "../model/Model.ts";
 
 export default function aStar(start: Cell, end: Cell, model: Model) {
-	const diagnostic = false
 	const grid = []
 	// Initializing grid
 	for (let i = 0; i < model.gridWidth; i++) {

@@ -4,7 +4,7 @@ import NodeHeap from "./BinaryHeap.ts";
 import Model from "../model/Model.ts";
 
 export default function jps(start: Cell, end: Cell, model: Model) {
-	const diagnostic = false
+
 	const grid = []
 	// Initializing grid
 	for (let i = 0; i < model.gridWidth; i++) {
@@ -90,37 +90,37 @@ function jump(x: number, y: number, px: number, py: number, model: Model, endNod
 	}
 
 	function checkHorizontal(xv: number, yv: number) {
-		return dx === 1 ? game.checkRightEdge(xv, yv) : game.checkLeftEdge(xv, yv)
+		return dx === 1 ? model.checkWalkableRight(xv, yv) : model.checkWalkableLeft(xv, yv)
 	}
 
 	function checkVertical(xv: number, yv: number) {
-		return dy === 1 ? game.checkBottomEdge(xv, yv) : game.checkTopEdge(xv, yv)
+		return dy === 1 ? model.checkWalkableBottom(xv, yv) : model.checkWalkableTop(xv, yv)
 	}
 
 	if (dx !== 0) {
 		// top right or left cell is blocked from at least one side
-		const topCheck = !checkHorizontal(x - dx, y - 1) || !game.checkBottomEdge(x - dx, y - 1)
+		const topCheck = !checkHorizontal(x - dx, y - 1) || !model.checkWalkableBottom(x - dx, y - 1)
 		// bottom right or left cell is blocked from at least one side
-		const bottomCheck = !checkHorizontal(x - dx,y + 1) || !game.checkTopEdge(x - dx, y + 1)
+		const bottomCheck = !checkHorizontal(x - dx,y + 1) || !model.checkWalkableTop(x - dx, y + 1)
 
 		// Pruning rules
-		if ((game.checkWalkableTop(x, y) && topCheck) || (game.checkWalkableBottom(x, y) && bottomCheck)) {
+		if ((model.checkWalkableTop(x, y) && topCheck) || (model.checkWalkableBottom(x, y) && bottomCheck)) {
 			return [x, y]
 		}
 	} else if (dy !== 0) {
 		// right bottom or top cell is blocked from at least one side
-		const topCheck = !checkVertical(x + 1, y - dy) || !game.checkWalkableLeft(x + 1, y - dy)
+		const topCheck = !checkVertical(x + 1, y - dy) || !model.checkWalkableLeft(x + 1, y - dy)
 		// left bottom or top cell is blocked from at least one side
-		const bottomCheck = !checkVertical(x - 1,y - dy) || !game.checkWalkableRight(x - 1, y - dy)
+		const bottomCheck = !checkVertical(x - 1,y - dy) || !model.checkWalkableRight(x - 1, y - dy)
 
 		// Pruning rules
-		if ((game.checkWalkableRight(x, y) && topCheck) || (game.checkWalkableLeft(x, y) && bottomCheck)) {
+		if ((model.checkWalkableRight(x, y) && topCheck) || (model.checkWalkableLeft(x, y) && bottomCheck)) {
 			return [x, y]
 		}
 
 		//When moving vertically, must check for horizontal jump points
-		if ((game.checkWalkableRight(x, y) && jump(x + 1, y, x, y, game, endNode)) ||
-			(game.checkWalkableLeft(x, y) && jump(x - 1, y, x, y, game, endNode))) {
+		if ((model.checkWalkableRight(x, y) && jump(x + 1, y, x, y, model, endNode)) ||
+			(model.checkWalkableLeft(x, y) && jump(x - 1, y, x, y, model, endNode))) {
 			return [x, y];
 		}
 	}
@@ -130,9 +130,9 @@ function jump(x: number, y: number, px: number, py: number, model: Model, endNod
 
 	// Continue to jump in direction, discarding whole jump when facing a direct obstacle or map edge
 	if (dx !== 0) {
-		return checkHorizontal(x, y) ? jump(x + dx, y, x, y, game, endNode) : null;
+		return checkHorizontal(x, y) ? jump(x + dx, y, x, y, model, endNode) : null;
 	} else {
-		return checkVertical(x, y) ? jump(x, y + dy, x, y, game, endNode) : null;
+		return checkVertical(x, y) ? jump(x, y + dy, x, y, model, endNode) : null;
 	}
 }
 
@@ -156,9 +156,9 @@ function findNeighbours(node: Node, model: Model, grid: Node[][]) {
 				neighbors.push([x, y + 1]);
 			}
       
-			if (dx === 1 && game.checkWalkableRight(x, y)) {
+			if (dx === 1 && model.checkWalkableRight(x, y)) {
 				neighbors.push([x + 1, y]);
-			} else if (game.checkWalkableLeft(x, y)) {
+			} else if (model.checkWalkableLeft(x, y)) {
 				neighbors.push([x - 1, y]);
 			}
       
@@ -170,9 +170,9 @@ function findNeighbours(node: Node, model: Model, grid: Node[][]) {
 				neighbors.push([x + 1, y]);
 			}
       
-			if (dy === 1 && game.checkWalkableBottom(x, y)) {
+			if (dy === 1 && model.checkWalkableBottom(x, y)) {
 				neighbors.push([x, y + 1]);
-			} else if (game.checkWalkableTop(x, y)) {
+			} else if (model.checkWalkableTop(x, y)) {
 				neighbors.push([x, y - 1]);
 			}
       
