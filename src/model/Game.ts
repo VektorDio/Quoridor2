@@ -71,7 +71,7 @@ export default class Game implements Model {
 		let winConditionsIsAccessible = true;
 
 		for (const player of this.players) {
-			if (!this.checkWinConditionStr(player.position, player.goalStr)) {
+			if (!this.checkWinCondition(player.position, player.goal)) {
 				winConditionsIsAccessible = false;
 				break;
 			}
@@ -201,46 +201,6 @@ export default class Game implements Model {
 		return this.gridEdges.has(this.getBottomEdge(nodeX, nodeY))
 	}
 
-	// checkWinCondition(playerNode: Cell, playerGoal: Cell[]): boolean {
-	// 	// adding starting player position
-	// 	const toDoArray: Cell[] = [{x: playerNode.x, y:playerNode.y}]
-	// 	const doneArray: Cell[] = []
-	//
-	// 	while (toDoArray.length > 0) {
-	// 		const node = toDoArray.pop()
-	// 		if (node !== undefined) { // node can't be undefined, but precompiler don't know this
-	// 			doneArray.push(node)
-	// 			for (const adjustedNode of this.adjustedNodes(node)) {
-	// 				if (playerGoal.find(goal => areCellsEqual(goal, adjustedNode))) {
-	// 					return true
-	// 				}
-	// 				if (doneArray.find(doneNode => areCellsEqual(doneNode, adjustedNode)) === undefined &&
-	// 					toDoArray.find(doneNode => areCellsEqual(doneNode, adjustedNode)) === undefined) {
-	// 					toDoArray.push(adjustedNode)
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// 	return false
-	// }
-	//
-	// private adjustedNodes(node: Cell): Cell[] {
-	// 	const nodes = []
-	// 	if(this.checkWalkableTop(node.x, node.y)) {
-	// 		nodes.push({x: node.x, y: node.y - 1})
-	// 	}
-	// 	if(this.checkWalkableLeft(node.x, node.y)) {
-	// 		nodes.push({x: node.x - 1, y: node.y})
-	// 	}
-	// 	if(this.checkWalkableRight(node.x, node.y)) {
-	// 		nodes.push({x: node.x + 1, y: node.y})
-	// 	}
-	// 	if(this.checkWalkableBottom(node.x, node.y)) {
-	// 		nodes.push({x: node.x, y: node.y + 1})
-	// 	}
-	// 	return nodes
-	// }
-
 	checkWinCondition(playerNode: Cell, playerGoal: Set<string>): boolean {
 		const toDoSet: Set<string> = new Set();
 		const doneSet: Set<string> = new Set();
@@ -276,13 +236,13 @@ export default class Game implements Model {
 			// this is not very readable, but should be one of the fastest way to convert int to string
 			nodes.push(x + "" + (y - 1))
 		}
-		if (this.checkLeftEdge(x, y)) {
+		if (this.checkWalkableLeft(x, y)) {
 			nodes.push(x - 1 + '' + y);
 		}
-		if (this.checkRightEdge(x, y)) {
+		if (this.checkWalkableRight(x, y)) {
 			nodes.push(x + 1 + '' + y);
 		}
-		if (this.checkBottomEdge(x, y)) {
+		if (this.checkWalkableBottom(x, y)) {
 			nodes.push(x + '' + (y + 1));
 		}
 		return nodes;
