@@ -1,15 +1,14 @@
 import NodeHeap from "./BinaryHeap.ts";
 import {Cell} from "../model/Cell.ts";
 import Node from "./Node.ts";
-import Game from "../model/Game.ts";
+import Model from "../model/Model.ts";
 
-export default function aStar(start: Cell, end: Cell, game: Game) {
-	const diagnostic = false
+export default function aStar(start: Cell, end: Cell, model: Model) {
 	const grid = []
 	// Initializing grid
-	for (let i = 0; i < game.gridWidth; i++) {
+	for (let i = 0; i < model.gridWidth; i++) {
 		const row = []
-		for (let j = 0; j < game.gridWidth; j++) {
+		for (let j = 0; j < model.gridWidth; j++) {
 			row.push(new Node(j, i))
 		}
 		grid[i] = row
@@ -41,16 +40,16 @@ export default function aStar(start: Cell, end: Cell, game: Game) {
 		const neighbours = []
 
 		// Adding neighbours
-		if(game.checkTopEdge(currentNode.x, currentNode.y)) {
+		if(model.checkWalkableTop(currentNode.x, currentNode.y)) {
 			neighbours.push(grid[currentNode.y - 1][currentNode.x])
 		}
-		if(game.checkLeftEdge(currentNode.x, currentNode.y)) {
+		if(model.checkWalkableLeft(currentNode.x, currentNode.y)) {
 			neighbours.push(grid[currentNode.y][currentNode.x - 1])
 		}
-		if(game.checkRightEdge(currentNode.x, currentNode.y)) {
+		if(model.checkWalkableRight(currentNode.x, currentNode.y)) {
 			neighbours.push(grid[currentNode.y][currentNode.x + 1])
 		}
-		if(game.checkBottomEdge(currentNode.x, currentNode.y)) {
+		if(model.checkWalkableBottom(currentNode.x, currentNode.y)) {
 			neighbours.push(grid[currentNode.y + 1][currentNode.x])
 		}
 
@@ -72,7 +71,7 @@ export default function aStar(start: Cell, end: Cell, game: Game) {
 				neighbour.parent = currentNode
 
 				// Distance to the end
-				neighbour.h = neighbour.h || manhattanDistance(neighbour, end);
+				neighbour.h = neighbour.h || Math.abs(neighbour.x - end.x) + Math.abs(neighbour.y - end.y); // manhattan distance
 				neighbour.g = gScore
 				neighbour.f = neighbour.g + neighbour.h
 
@@ -87,8 +86,4 @@ export default function aStar(start: Cell, end: Cell, game: Game) {
 	}
 	// No result was found
 	return []
-}
-
-function manhattanDistance(cell1: Cell | Node, cell2: Cell) {
-	return Math.abs(cell1.x - cell2.x) + Math.abs(cell1.y - cell2.y);
 }

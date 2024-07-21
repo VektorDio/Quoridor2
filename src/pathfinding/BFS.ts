@@ -1,13 +1,13 @@
-import Game from "../model/Game.ts";
 import {Cell} from "../model/Cell.ts";
 import Node from "./Node.ts";
+import Model from "../model/Model.ts";
 
-export default function bfs(start: Cell, end: Cell, game: Game) {
+export default function bfs(start: Cell, end: Cell, model: Model) {
 	const grid = []
 	// Initializing grid
-	for (let i = 0; i < game.gridWidth; i++) {
+	for (let i = 0; i < model.gridWidth; i++) {
 		const row = []
-		for (let j = 0; j < game.gridWidth; j++) {
+		for (let j = 0; j < model.gridWidth; j++) {
 			row.push(new Node(j, i))
 		}
 		grid[i] = row
@@ -17,12 +17,7 @@ export default function bfs(start: Cell, end: Cell, game: Game) {
 	grid[start.y][start.x].visited = true // ?
 	openList.push(grid[start.y][start.x])
 
-	let iterations = 0
-	let neighboursChecked = 0
-
 	while (openList.length > 0) {
-		iterations++
-
 		const currentNode = openList.shift() as Node
 
 		if(currentNode.x === end.x && currentNode.y === end.y) {
@@ -32,7 +27,6 @@ export default function bfs(start: Cell, end: Cell, game: Game) {
 				ret.push(curr);
 				curr = curr.parent;
 			}
-			console.log({iterations, neighboursChecked})
 			return ret.reverse(); // ?
 		}
 
@@ -41,16 +35,16 @@ export default function bfs(start: Cell, end: Cell, game: Game) {
 		const neighbours = []
 
 		// Adding neighbours
-		if(game.checkTopEdge(currentNode.x, currentNode.y)) {
+		if(model.checkWalkableTop(currentNode.x, currentNode.y)) {
 			neighbours.push(grid[currentNode.y - 1][currentNode.x])
 		}
-		if(game.checkLeftEdge(currentNode.x, currentNode.y)) {
+		if(model.checkWalkableLeft(currentNode.x, currentNode.y)) {
 			neighbours.push(grid[currentNode.y][currentNode.x - 1])
 		}
-		if(game.checkRightEdge(currentNode.x, currentNode.y)) {
+		if(model.checkWalkableRight(currentNode.x, currentNode.y)) {
 			neighbours.push(grid[currentNode.y][currentNode.x + 1])
 		}
-		if(game.checkBottomEdge(currentNode.x, currentNode.y)) {
+		if(model.checkWalkableBottom(currentNode.x, currentNode.y)) {
 			neighbours.push(grid[currentNode.y + 1][currentNode.x])
 		}
 
@@ -62,14 +56,11 @@ export default function bfs(start: Cell, end: Cell, game: Game) {
 				continue
 			}
 
-			neighboursChecked++
-
 			openList.push(neighbour)
 			neighbour.visited = true
 			neighbour.parent = currentNode
 		}
 	}
 
-	console.log({iterations, neighboursChecked})
 	return []
 }
