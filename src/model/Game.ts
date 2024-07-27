@@ -64,7 +64,7 @@ export default class Game implements Model {
 			secondEdge = this.getRightEdge(x, y + 1);
 		}
 
-		// trying to place wall
+		// trying to place wall by deleting pass in grid
 		this.gridEdges.delete(firstEdge);
 		this.gridEdges.delete(secondEdge);
 
@@ -205,7 +205,6 @@ export default class Game implements Model {
 		const toDoSet: Set<string> = new Set();
 		const doneSet: Set<string> = new Set();
 		toDoSet.add(playerNode.x + '' + playerNode.y);
-
 
 		while (toDoSet.size > 0) {
 			//const node = toDoSet.values().next().value

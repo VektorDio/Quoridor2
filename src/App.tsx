@@ -33,6 +33,7 @@ function App() {
 								<PlayerCard
 									color={getColor(idx)}
 									wallsAmount={player.walls}
+									key={idx}
 									isTurn={player === state.getCurrentPlayer()}
 								/>
 							);

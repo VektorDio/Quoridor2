@@ -9,11 +9,11 @@ export default function getNextMove(game: Game): Move | undefined{
 	const depth = 2 // from 1 to 8
 
 	// alpha and beta supposed to be book numbers
-	//const [score, move ] = pvs(depth, -999, 999, color, game)
-	const [score, move ] = negamax(depth, color, game)
+	const [score, move] = pvs(depth, -999, 999, color, game)
+	//const [score, move ] = negamax(depth, color, game)
 
 	if (move) {
-		//console.log("Color: " + color + " Score: " + score)
+		console.log("Color: " + color + " Score: " + score)
 		//console.log(isPlayerMove(move) ? move.newPosition : move.position)
 		return move
 	} else return undefined // no available moves
@@ -22,9 +22,9 @@ export default function getNextMove(game: Game): Move | undefined{
 function pvs(depth: number, a: number, b: number, color: number, game: Game): [number, Move | undefined] {
 	const [ player1, player2 ] = game.players
 	// checking if position is terminal
-	if (player1.position.y === player1.goal[0].y) {
+	if (player1.goal.has(player1.position.x + "" + player1.position.y)) {
 		return [color * 999, undefined] // ??
-	} else if (player2.position.y === player2.goal[0].y) {
+	} else if (player2.goal.has(player2.position.x + "" + player2.position.y)) {
 		return [color * -999, undefined] // ?
 	}
 
@@ -126,7 +126,9 @@ function negamax(depth: number, color: number, game: Game): [number, Move | unde
 	// 	return [color * -999, undefined] // ?
 	// }
 
-	if (depth === 0 || player1.position.y === player1.goal[0].y || player2.position.y === player2.goal[0].y) {
+	if (depth === 0 ||
+		player1.goal.has(player1.position.x + "" + player1.position.y) ||
+		player2.goal.has(player2.position.x + "" + player2.position.y)) {
 		return [color * evaluatePosition(game), undefined] // color multiplication need to change player side/POV
 	}
 
