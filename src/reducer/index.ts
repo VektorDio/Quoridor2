@@ -2,7 +2,8 @@ import { Action, ActionTypes } from './type';
 import { isPlayerMove, Move } from '../model/Move.ts';
 import Game from '../model/Game.ts';
 import { deepCopy } from '../utils';
-import getNextMove from "../bots/NegaScout.ts";
+import { Bounce, toast } from 'react-toastify';
+import getNextMove from '../bots/NegaScout.ts';
 
 const ACTIONS: Record<ActionTypes, (state: Game, value: Move) => any> = {
 	MOVE_PLAYER: (state, value) => {
@@ -15,13 +16,7 @@ const ACTIONS: Record<ActionTypes, (state: Game, value: Move) => any> = {
 	PLACE_WALL: (state, value) => {
 		if(!isPlayerMove(value)) {
 			const { position } = value
-
-			try {
-				state.executeMove({ position, removedWalls: [] })
-			} catch (e) {
-				// error
-			}
-
+			state.executeMove({ position, removedWalls: [] })
 			return deepCopy(state)
 		}
 	},
@@ -33,12 +28,26 @@ const ACTIONS: Record<ActionTypes, (state: Game, value: Move) => any> = {
 
 export const reducer = (state: Game, action: Action): Game => {
 	const actionFunction = ACTIONS[action.type]
-	const newState = actionFunction(state, action.value)
-
-	const botMove = getNextMove(newState)
-	if (botMove) {
-		newState.executeMove(botMove)
+	try {
+		const newState = actionFunction(state, action.value)
+		const botMove = getNextMove(newState)
+		if (botMove) {
+			newState.executeMove(botMove)
+		}
+		return newState
+	} catch (e: any) {
+		toast.error(e?.message, {
+			position: 'bottom-right',
+			autoClose: 3000,
+			hideProgressBar: false,
+			closeOnClick: true,
+			pauseOnHover: true,
+			draggable: true,
+			progress: undefined,
+			theme: 'dark',
+			transition: Bounce
+		});
+		console.log(e?.message)
+		return state
 	}
-
-	return deepCopy(newState)
 }
