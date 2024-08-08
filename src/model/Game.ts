@@ -208,7 +208,7 @@ export default class Game implements Model {
 
 		while (toDoSet.size > 0) {
 			//const node = toDoSet.values().next().value
-			const node = [...toDoSet].pop();
+			const node = [...toDoSet].pop(); // bad performance
 
 			if (node !== undefined) { // node can't be undefined, but precompiler don't know this
 				toDoSet.delete(node)
