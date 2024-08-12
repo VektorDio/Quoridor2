@@ -1,7 +1,7 @@
 // @ts-nocheck
 import Game from "../model/Game.ts";
 import {Move} from "../model/Move.ts";
-//import jps from "../pathfinding/JPS.ts";
+import jps from "../pathfinding/JPS.ts";
 import aStar from "../pathfinding/AStar.ts";
 
 export default class Negascout {
@@ -109,6 +109,20 @@ export default class Negascout {
 			const pathLength = path.length === 0 ? 99 : path.length
 			d2 = Math.min(d2, pathLength)
 		})
+
+		// player1.goal.forEach(goalStr => {
+		// 	const goalCell = { x: goalStr[0], y: goalStr[1] }
+		// 	const path = jps(goalCell, player1.position, this.game)
+		// 	const pathLength = path.length > 0 ? path[path.length - 1].g : 99
+		// 	d1 = Math.min(d1, pathLength)
+		// })
+		//
+		// player2.goal.forEach(goalStr => {
+		// 	const goalCell = { x: goalStr[0], y: goalStr[1] }
+		// 	const path = jps(goalCell, player2.position, this.game)
+		// 	const pathLength = path.length > 0 ? path[path.length - 1].g : 99
+		// 	d2 = Math.min(d2, pathLength)
+		// })
 
 		// Return the combined evaluation
 		const score = (d2 - d1) + ((10 - w2) - (10 - w1))
