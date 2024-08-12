@@ -6,8 +6,8 @@ import aStar from "../pathfinding/AStar.ts";
 
 export default class Negascout {
 	game: Game
-	depth: number = 1
-	transpositionTable: Map<string, number> = new Map()
+	depth: number = 2 // from 1 to 4
+	transpositionTable: Map<number, number> = new Map()
 
 	constructor(game: Game, depth: number) {
 		this.game = game;
@@ -16,10 +16,9 @@ export default class Negascout {
 
 	getNextMove(): Move | undefined {
 		const color = this.game.playerIndex === 0 ? 1 : -1
-		const depth = 3 // from 1 to 4
 
 		// alpha and beta are book numbers
-		const [score, move] = this.negascout(depth, -99, 99, color)
+		const [score, move] = this.negascout(this.depth, -99, 99, color)
 
 		if (move) {
 			return move
@@ -84,6 +83,19 @@ export default class Negascout {
 		let d1 = 99, d2 = 99
 		const w1 = player1.walls, w2 = player2.walls
 
+		// hash is order-sensitive, so we need to sort wall`s set, that was messed up by do-undo move functions
+		const sortedWallsAvailable = [...this.game.wallsAvailable].sort() // huge underperformance
+
+		let positionString: string = ''
+		sortedWallsAvailable.forEach(wall => positionString+= wall)
+		positionString += '' + player1.position.x + player1.position.y + player2.position.x + player2.position.y + w1 + w2
+
+		const positionHash = this.hashCode(positionString)
+
+		if (this.transpositionTable.has(positionHash)) {
+			return this.transpositionTable.get(positionHash)
+		}
+
 		player1.goal.forEach(goalStr => {
 			const goalCell = { x: goalStr[0], y: goalStr[1] }
 			const path = aStar(goalCell, player1.position, this.game)
@@ -99,7 +111,20 @@ export default class Negascout {
 		})
 
 		// Return the combined evaluation
-		return (d2 - d1) + ((10 - w2) - (10 - w1));
+		const score = (d2 - d1) + ((10 - w2) - (10 - w1))
+		this.transpositionTable.set(positionHash, score)
+		return score;
+	}
+
+	private hashCode(str: string): number {
+		let hash = 0, i, chr;
+		//if (str.length === 0) return hash; // this function will always be used with non-zero length strings
+		for (i = 0; i < str.length; i++) {
+			chr = str.charCodeAt(i);
+			hash = ((hash << 5) - hash) + chr;
+			hash |= 0; // Convert to 32bit integer
+		}
+		return hash;
 	}
 
 	private getPossibleMoves() {
