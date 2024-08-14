@@ -115,7 +115,13 @@ export default class Negascout {
 		})
 
 		// Return the combined evaluation
-		const score = (d2 - d1) + ((10 - w2) - (10 - w1))
+		let score
+		if (w1 + w2 < 10) {
+			score = (d2 - d1) + ((10 - w2) - (10 - w1))*2
+		} else {
+			score = (d2 - d1) + ((10 - w2) - (10 - w1))
+		}
+
 		this.transpositionTable.set(positionHash, score)
 		return score;
 	}
