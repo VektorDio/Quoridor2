@@ -80,7 +80,7 @@ export default class Game implements Model {
 		if (!winConditionsIsAccessible) {
 			this.gridEdges.add(firstEdge);
 			this.gridEdges.add(secondEdge);
-			console.log('Wall blocks someone`s path');
+			//console.log('Wall blocks someone`s path');
 			throw new Error('Wall blocks someone`s path');
 		}
 
@@ -202,24 +202,19 @@ export default class Game implements Model {
 	}
 
 	checkWinCondition(playerNode: Cell, playerGoal: Set<string>): boolean {
-		const toDoSet: Set<string> = new Set();
-		const doneSet: Set<string> = new Set();
-		toDoSet.add(playerNode.x + '' + playerNode.y);
+		const toDoStack: string[] = [`${playerNode.x}${playerNode.y}`]; // Initialize stack with the starting node
+		const doneSet: Set<string> = new Set(toDoStack); // Initialize doneSet with the starting node
 
-		while (toDoSet.size > 0) {
-			//const node = toDoSet.values().next().value
-			const node = [...toDoSet].pop(); // bad performance
+		while (toDoStack.length > 0) {
+			const node = toDoStack.pop()!;
 
-			if (node !== undefined) { // node can't be undefined, but precompiler don't know this
-				toDoSet.delete(node)
-				doneSet.add(node)
-				for (const adjustedNode of this.adjustedNodes(node)) {
-					if (playerGoal.has(adjustedNode)) {
-						return true;
-					}
-					if (!doneSet.has(adjustedNode)) { // here we don't need duplicate check, as we're using set
-						toDoSet.add(adjustedNode)
-					}
+			for (const adjustedNode of this.adjustedNodes(node)) {
+				if (playerGoal.has(adjustedNode)) {
+					return true;
+				}
+				if (!doneSet.has(adjustedNode)) {
+					doneSet.add(adjustedNode);
+					toDoStack.push(adjustedNode);
 				}
 			}
 		}
@@ -246,6 +241,31 @@ export default class Game implements Model {
 		}
 		return nodes;
 	}
+
+	// checkWinConditionPrev(playerNode: Cell, playerGoal: Set<string>): boolean {
+	// 	const toDoSet: Set<string> = new Set();
+	// 	const doneSet: Set<string> = new Set();
+	// 	toDoSet.add(playerNode.x + '' + playerNode.y);
+	//
+	// 	while (toDoSet.size > 0) {
+	// 		//const node = toDoSet.values().next().value
+	// 		const node = [...toDoSet].pop(); // bad performance
+	//
+	// 		if (node !== undefined) { // node can't be undefined, but precompiler don't know this
+	// 			toDoSet.delete(node)
+	// 			doneSet.add(node)
+	// 			for (const adjustedNode of this.adjustedNodes(node)) {
+	// 				if (playerGoal.has(adjustedNode)) {
+	// 					return true;
+	// 				}
+	// 				if (!doneSet.has(adjustedNode)) { // here we don't need duplicate check, as we're using set
+	// 					toDoSet.add(adjustedNode)
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// 	return false;
+	// }
 
 	private initializeEdges(): void {
 		// actually, its (width * (width - 1)) * 2, but we need this to make it square

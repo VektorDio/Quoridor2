@@ -3,7 +3,7 @@ import { isPlayerMove, Move } from '../model/Move.ts';
 import Game from '../model/Game.ts';
 import { deepCopy } from '../utils';
 import { Bounce, toast } from 'react-toastify';
-import Negamax from '../bots/Negamax.ts';
+//import Negamax from '../bots/Negamax.ts';
 import Negascout from '../bots/NegaScout.ts';
 
 const ACTIONS: Record<ActionTypes, (state: Game, value: Move) => any> = {
@@ -38,7 +38,7 @@ export const reducer = (state: Game, action: Action): Game => {
 		// console.timeEnd()
 
 		console.time()
-		const bot = new Negascout(newState, 3)
+		const bot = new Negascout(newState, 4)
 		const botMove = bot.getNextMove()
 		console.timeEnd()
 

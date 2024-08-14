@@ -3,6 +3,7 @@ import Game from "../model/Game.ts";
 import {Move} from "../model/Move.ts";
 import jps from "../pathfinding/JPS.ts";
 import aStar from "../pathfinding/AStar.ts";
+import { Player } from '../model/Player.ts';
 
 export default class Negascout {
 	game: Game
@@ -41,7 +42,7 @@ export default class Negascout {
 		}
 
 		let bestMove
-		const possibleMoves = this.getPossibleMoves()
+		const possibleMoves = this.getPossibleMoves(color)
 
 		for (let i = 0; i < possibleMoves.length; i++) {
 			const move = possibleMoves[i]
@@ -71,7 +72,9 @@ export default class Negascout {
 
 			// eslint-disable-next-line no-param-reassign
 			a = Math.max(a, score)
-			if (a >= b) break
+			if (a >= b) {
+				break
+			}
 		}
 
 		return [a, bestMove]
@@ -84,7 +87,8 @@ export default class Negascout {
 		const w1 = player1.walls, w2 = player2.walls
 
 		// hash is order-sensitive, so we need to sort wall`s set, that was messed up by do-undo move functions
-		const sortedWallsAvailable = [...this.game.wallsAvailable].sort() // huge underperformance
+		//const sortedWallsAvailable = [...this.game.wallsAvailable].sort() // huge underperformance
+		const sortedWallsAvailable = Array.from(this.game.wallsAvailable).sort(); // not too much difference
 
 		let positionString: string = ''
 		sortedWallsAvailable.forEach(wall => positionString+= wall)
@@ -110,20 +114,6 @@ export default class Negascout {
 			d2 = Math.min(d2, pathLength)
 		})
 
-		// player1.goal.forEach(goalStr => {
-		// 	const goalCell = { x: goalStr[0], y: goalStr[1] }
-		// 	const path = jps(goalCell, player1.position, this.game)
-		// 	const pathLength = path.length > 0 ? path[path.length - 1].g : 99
-		// 	d1 = Math.min(d1, pathLength)
-		// })
-		//
-		// player2.goal.forEach(goalStr => {
-		// 	const goalCell = { x: goalStr[0], y: goalStr[1] }
-		// 	const path = jps(goalCell, player2.position, this.game)
-		// 	const pathLength = path.length > 0 ? path[path.length - 1].g : 99
-		// 	d2 = Math.min(d2, pathLength)
-		// })
-
 		// Return the combined evaluation
 		const score = (d2 - d1) + ((10 - w2) - (10 - w1))
 		this.transpositionTable.set(positionHash, score)
@@ -141,13 +131,56 @@ export default class Negascout {
 		return hash;
 	}
 
-	private getPossibleMoves() {
+	private getPossibleMoves(color: number) {
 		const possibleMoves = this.game.possiblePlayerMoves()
 
 		if (this.game.getCurrentPlayer().walls > 0) {
-			this.game.wallsAvailable.forEach(wall => possibleMoves.push({ position: wall, removedWalls: [] }))
+			const possibleWalls = new Set<string>()
+			const [player1, player2] = this.game.players
+
+			const player1Walls = this.getWallsAroundPlayer(player1)
+			const player2Walls = this.getWallsAroundPlayer(player2)
+
+			// adding walls around players
+			if (color === 1) {
+				player1Walls.forEach(wall => possibleWalls.add(wall))
+				player2Walls.forEach(wall => possibleWalls.add(wall))
+			} else {
+				player2Walls.forEach(wall => possibleWalls.add(wall))
+				player1Walls.forEach(wall => possibleWalls.add(wall))
+			}
+
+			// adding all other walls
+			this.game.wallsAvailable.forEach(wall => possibleWalls.add(wall))
+
+			possibleWalls.forEach(wall => possibleMoves.push({ position: wall, removedWalls: [] }))
 		}
 
 		return possibleMoves
+	}
+
+	private getWallsAroundPlayer(player: Player): string[] {
+		const walls: string[] = []
+		const possibleWalls: string[] = []
+
+		possibleWalls.push((player.position.x - 1) + "" + (player.position.y - 1) + "h")
+		possibleWalls.push((player.position.x - 1) + "" + (player.position.y - 1) + "v")
+
+		possibleWalls.push((player.position.x) + "" + (player.position.y - 1) + "h")
+		possibleWalls.push((player.position.x) + "" + (player.position.y - 1) + "v")
+
+		possibleWalls.push((player.position.x - 1) + "" + (player.position.y) + "h")
+		possibleWalls.push((player.position.x - 1) + "" + (player.position.y) + "v")
+
+		possibleWalls.push((player.position.x) + "" + (player.position.y) + "h")
+		possibleWalls.push((player.position.x) + "" + (player.position.y) + "v")
+
+		possibleWalls.forEach(wall => {
+			if (this.game.wallsAvailable.has(wall)) {
+				walls.push(wall)
+			}
+		})
+
+		return walls
 	}
 }
