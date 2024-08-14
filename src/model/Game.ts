@@ -223,8 +223,8 @@ export default class Game implements Model {
 
 	private adjustedNodes(node: string): string[] {
 		const nodes = [];
-		const x = parseInt(node[0]);
-		const y = parseInt(node[1]);
+		const x = parseInt(node[0], 10);
+		const y = parseInt(node[1], 10);
 
 		if(this.checkWalkableTop(x, y)) {
 			// this is not very readable, but should be one of the fastest way to convert int to string

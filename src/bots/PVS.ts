@@ -1,32 +1,31 @@
 // @ts-nocheck
 import Game from "../model/Game.ts";
 import {Move} from "../model/Move.ts";
-import jps from "../pathfinding/JPS.ts";
+5//import jps from "../pathfinding/JPS.ts";
 import aStar from "../pathfinding/AStar.ts";
 import { Player } from '../model/Player.ts';
 
-export default class Negascout {
+class PVS {
 	game: Game
 	depth: number = 2 // from 1 to 4
 	transpositionTable: Map<number, number> = new Map()
 
-	constructor(game: Game, depth: number) {
-		this.game = game;
+	constructor(depth: number) {
 		this.depth = depth;
 	}
 
-	getNextMove(): Move | undefined {
+	getNextMove(game: Game): Move | undefined {
+		this.game = game // test
 		const color = this.game.playerIndex === 0 ? 1 : -1
 
 		// alpha and beta are book numbers
-		const [score, move] = this.negascout(this.depth, -99, 99, color)
-
+		const [score, move] = this.pvs(this.depth, -99, 99, color)
 		if (move) {
 			return move
 		} else return undefined // no available moves
 	}
 
-	private negascout(depth: number, a: number, b: number, color: number): [number, Move | undefined] {
+	private pvs(depth: number, a: number, b: number, color: number): [number, Move | undefined] {
 		const [player1, player2] = this.game.players
 
 		// may cause anomalies?
@@ -37,12 +36,15 @@ export default class Negascout {
 		}
 
 		if (depth === 0) {
-			const score = color * this.evaluatePosition() // color multiplication need to change player side/POV
+			const score = this.evaluatePosition(color)
 			return [score, undefined]
 		}
 
 		let bestMove
 		const possibleMoves = this.getPossibleMoves(color)
+		// when set to 1, it seems to improve performance slightly,
+		// but sometimes generates anomalies that causes wrong moves with 50s evaluation time
+		const epsilon = 0;
 
 		for (let i = 0; i < possibleMoves.length; i++) {
 			const move = possibleMoves[i]
@@ -55,11 +57,11 @@ export default class Negascout {
 			}
 
 			if (i === 0) {
-				score = -(this.negascout(depth - 1, -b, -a, -color)[0])
+				score = -(this.pvs(depth - 1, -b, -a, -color)[0])
 			} else {
-				score = -(this.negascout(depth - 1, -a - 1, -a, -color)[0])
-				if (score > a && score < b) {
-					score = -(this.negascout(depth - 1, -b, -a, -color)[0])
+				score = -(this.pvs(depth - 1, -a - 1, -a, -color)[0])
+				if (score > a + epsilon && score < b) {
+					score = -(this.pvs(depth - 1, -b, -a, -color)[0])
 				}
 			}
 
@@ -80,7 +82,7 @@ export default class Negascout {
 		return [a, bestMove]
 	}
 
-	private evaluatePosition() {
+	private evaluatePosition(color: number) {
 		const [player1, player2] = this.game.players
 
 		let d1 = 99, d2 = 99
@@ -114,16 +116,21 @@ export default class Negascout {
 			d2 = Math.min(d2, pathLength)
 		})
 
-		// Return the combined evaluation
-		let score
-		if (w1 + w2 < 10) {
-			score = (d2 - d1) + ((10 - w2) - (10 - w1))*2
-		} else {
-			score = (d2 - d1) + ((10 - w2) - (10 - w1))
-		}
+		// Adjusting the score based on remaining walls
+		const wallDifference = (10 - w2) - (10 - w1);
+		const multiplier = (color === 1 && w1 < 10) || (color === -1 && w2 < 10) ? 1 : 2;
 
-		this.transpositionTable.set(positionHash, score)
-		return score;
+		const centrality1 = -(Math.abs(player1.position.x - 4))
+		const centrality2 = -(Math.abs(player2.position.x - 4))
+
+		// Return the combined evaluation
+		let score = (d2 - d1);
+		score += wallDifference * multiplier;
+		score += (centrality1 - centrality2);
+
+		this.transpositionTable.set(positionHash, color * score)
+		// color multiplication need to change player side/POV
+		return color * score;
 	}
 
 	private hashCode(str: string): number {
@@ -190,3 +197,5 @@ export default class Negascout {
 		return walls
 	}
 }
+
+export default new PVS(4)

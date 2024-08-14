@@ -4,7 +4,7 @@ import Game from '../model/Game.ts';
 import { deepCopy } from '../utils';
 import { Bounce, toast } from 'react-toastify';
 //import Negamax from '../bots/Negamax.ts';
-import Negascout from '../bots/NegaScout.ts';
+import pvs from '../bots/PVS.ts';
 
 const ACTIONS: Record<ActionTypes, (state: Game, value: Move) => any> = {
 	MOVE_PLAYER: (state, value) => {
@@ -38,8 +38,7 @@ export const reducer = (state: Game, action: Action): Game => {
 		// console.timeEnd()
 
 		console.time()
-		const bot = new Negascout(newState, 4)
-		const botMove = bot.getNextMove()
+		const botMove = pvs.getNextMove(newState)
 		console.timeEnd()
 
 		if (botMove) {
