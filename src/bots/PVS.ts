@@ -1,14 +1,16 @@
 // @ts-nocheck
 import Game from "../model/Game.ts";
-import {Move} from "../model/Move.ts";
-5//import jps from "../pathfinding/JPS.ts";
+import { isPlayerMove, Move } from '../model/Move.ts';
 import aStar from "../pathfinding/AStar.ts";
 import { Player } from '../model/Player.ts';
+import Node from "../pathfinding/Node.ts";
 
 class PVS {
 	game: Game
-	depth: number = 2 // from 1 to 4
+	depth: number
 	transpositionTable: Map<number, number> = new Map()
+	shortestPath1: Node[]
+	shortestPath2: Node[]
 
 	constructor(depth: number) {
 		this.depth = depth;
@@ -102,23 +104,45 @@ class PVS {
 			return this.transpositionTable.get(positionHash)
 		}
 
-		player1.goal.forEach(goalStr => {
-			const goalCell = { x: goalStr[0], y: goalStr[1] }
-			const path = aStar(goalCell, player1.position, this.game)
-			const pathLength = path.length === 0 ? 99 : path.length
-			d1 = Math.min(d1, pathLength)
-		})
+		if (!this.shortestPath1 ||
+			isPlayerMove(this.game.moveHistory[this.game.moveHistory.length - 1]) ||
+			!this.isPathWalkable(this.shortestPath2)) {
+			player1.goal.forEach(goalStr => {
+				const goalCell = { x: goalStr[0], y: goalStr[1] }
+				const path = aStar(goalCell, player1.position, this.game)
+				const pathLength = path.length === 0 ? 99 : path.length
 
-		player2.goal.forEach(goalStr => {
-			const goalCell = { x: goalStr[0], y: goalStr[1] }
-			const path = aStar(goalCell, player2.position, this.game)
-			const pathLength = path.length === 0 ? 99 : path.length
-			d2 = Math.min(d2, pathLength)
-		})
+				if (pathLength >= d1) {
+					this.shortestPath1 = path
+				}
+
+				d1 = Math.min(d1, pathLength)
+			})
+		} else {
+			d1 = this.shortestPath1.length
+		}
+
+		if (!this.shortestPath2 ||
+			isPlayerMove(this.game.moveHistory[this.game.moveHistory.length - 1]) ||
+			!this.isPathWalkable(this.shortestPath2)) {
+			player2.goal.forEach(goalStr => {
+				const goalCell = { x: goalStr[0], y: goalStr[1] }
+				const path = aStar(goalCell, player2.position, this.game)
+				const pathLength = path.length === 0 ? 99 : path.length
+
+				if (pathLength >= d2) {
+					this.shortestPath2 = path
+				}
+
+				d2 = Math.min(d2, pathLength)
+			})
+		} else {
+			d2 = this.shortestPath2.length
+		}
 
 		// Adjusting the score based on remaining walls
 		const wallDifference = (10 - w2) - (10 - w1);
-		const multiplier = (color === 1 && w1 < 10) || (color === -1 && w2 < 10) ? 1 : 2;
+		const multiplier = (color === 1 && w1 < 10) || (color === -1 && w2 < 10) ? 2 : 1;
 
 		const centrality1 = -(Math.abs(player1.position.x - 4))
 		const centrality2 = -(Math.abs(player2.position.x - 4))
@@ -126,11 +150,32 @@ class PVS {
 		// Return the combined evaluation
 		let score = (d2 - d1);
 		score += wallDifference * multiplier;
-		score += (centrality1 - centrality2);
+		score += (centrality1 - centrality2) / 2;
 
 		this.transpositionTable.set(positionHash, color * score)
 		// color multiplication need to change player side/POV
 		return color * score;
+	}
+
+	private isPathWalkable(path: Node[]): boolean {
+		let currentNode: Node, nextNode: Node;
+		for (let i = 0; i < path.length - 1; i++) {
+			currentNode = path[i];
+			nextNode = path[i + 1];
+
+			// Calculate deltas
+			const deltaX = nextNode.x - currentNode.x;
+			const deltaY = nextNode.y - currentNode.y;
+
+			// Early exit if any move is not walkable
+			if ((deltaX === -1 && !this.game.checkWalkableLeft(currentNode.x, currentNode.y)) ||
+				(deltaX === 1 && !this.game.checkWalkableRight(currentNode.x, currentNode.y)) ||
+				(deltaY === -1 && !this.game.checkWalkableTop(currentNode.x, currentNode.y)) ||
+				(deltaY === 1 && !this.game.checkWalkableBottom(currentNode.x, currentNode.y))) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private hashCode(str: string): number {
@@ -197,5 +242,5 @@ class PVS {
 		return walls
 	}
 }
-
+// depth from 1 to 4
 export default new PVS(4)
