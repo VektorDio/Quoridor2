@@ -22,9 +22,7 @@ class PVS {
 
 		// alpha and beta are book numbers
 		const [score, move] = this.pvs(this.depth, -99, 99, color)
-		if (move) {
-			return move
-		} else return undefined // no available moves
+		return move || undefined // no available moves
 	}
 
 	private pvs(depth: number, a: number, b: number, color: number): [number, Move | undefined] {
@@ -44,25 +42,28 @@ class PVS {
 
 		let bestMove
 		const possibleMoves = this.getPossibleMoves(color)
-		// when set to 1, it seems to improve performance slightly,
-		// but sometimes generates anomalies that causes wrong moves with 50s evaluation time
-		const epsilon = 0;
 
 		for (let i = 0; i < possibleMoves.length; i++) {
 			const move = possibleMoves[i]
 
-			let score
+			let score: number
 			try {
 				this.game.executeMove(move) // if wall blocks someone's win condition, it will through an error
 			} catch (e) {
 				continue
 			}
 
+			// maxDepth - 1 = 3
+			if (depth === 3) {
+				this.shortestPath1 = 0
+				this.shortestPath2 = 0
+			}
+
 			if (i === 0) {
 				score = -(this.pvs(depth - 1, -b, -a, -color)[0])
 			} else {
 				score = -(this.pvs(depth - 1, -a - 1, -a, -color)[0])
-				if (score > a + epsilon && score < b) {
+				if (score > a && score < b) {
 					score = -(this.pvs(depth - 1, -b, -a, -color)[0])
 				}
 			}
@@ -94,9 +95,8 @@ class PVS {
 		//const sortedWallsAvailable = [...this.game.wallsAvailable].sort() // huge underperformance
 		const sortedWallsAvailable = Array.from(this.game.wallsAvailable).sort(); // not too much difference
 
-		let positionString: string = ''
-		sortedWallsAvailable.forEach(wall => positionString+= wall)
-		positionString += '' + player1.position.x + player1.position.y + player2.position.x + player2.position.y + w1 + w2
+		const positionString: string = sortedWallsAvailable.join('') +
+			player1.position.x + player1.position.y + player2.position.x + player2.position.y + w1 + w2
 
 		const positionHash = this.hashCode(positionString)
 
@@ -104,37 +104,38 @@ class PVS {
 			return this.transpositionTable.get(positionHash)
 		}
 
+		const lastMove = this.game.moveHistory[this.game.moveHistory.length - 1]
+		const isLastMovePlayerMove = isPlayerMove(lastMove)
+
 		if (!this.shortestPath1 ||
-			isPlayerMove(this.game.moveHistory[this.game.moveHistory.length - 1]) ||
-			!this.isPathWalkable(this.shortestPath2)) {
+			isLastMovePlayerMove ||
+			!this.isPathWalkable(this.shortestPath1)) {
 			player1.goal.forEach(goalStr => {
 				const goalCell = { x: goalStr[0], y: goalStr[1] }
 				const path = aStar(goalCell, player1.position, this.game)
 				const pathLength = path.length === 0 ? 99 : path.length
 
-				if (pathLength >= d1) {
-					this.shortestPath1 = path
+				if (pathLength < d1) {
+					this.shortestPath1 = path;
+					d1 = pathLength;
 				}
-
-				d1 = Math.min(d1, pathLength)
 			})
 		} else {
 			d1 = this.shortestPath1.length
 		}
 
 		if (!this.shortestPath2 ||
-			isPlayerMove(this.game.moveHistory[this.game.moveHistory.length - 1]) ||
+			isLastMovePlayerMove ||
 			!this.isPathWalkable(this.shortestPath2)) {
 			player2.goal.forEach(goalStr => {
 				const goalCell = { x: goalStr[0], y: goalStr[1] }
 				const path = aStar(goalCell, player2.position, this.game)
 				const pathLength = path.length === 0 ? 99 : path.length
 
-				if (pathLength >= d2) {
-					this.shortestPath2 = path
+				if (pathLength < d2) {
+					this.shortestPath2 = path;
+					d2 = pathLength;
 				}
-
-				d2 = Math.min(d2, pathLength)
 			})
 		} else {
 			d2 = this.shortestPath2.length
@@ -144,16 +145,16 @@ class PVS {
 		const wallDifference = (10 - w2) - (10 - w1);
 		const multiplier = (color === 1 && w1 < 10) || (color === -1 && w2 < 10) ? 2 : 1;
 
-		const centrality1 = -(Math.abs(player1.position.x - 4))
-		const centrality2 = -(Math.abs(player2.position.x - 4))
+		const centrality1 = Math.abs(player1.position.x - 4)
+		const centrality2 = Math.abs(player2.position.x - 4)
 
 		// Return the combined evaluation
 		let score = (d2 - d1);
 		score += wallDifference * multiplier;
-		score += (centrality1 - centrality2) / 2;
+		score += (centrality2 - centrality1) / 2;
 
-		this.transpositionTable.set(positionHash, color * score)
 		// color multiplication need to change player side/POV
+		this.transpositionTable.set(positionHash, color * score)
 		return color * score;
 	}
 
