@@ -41,6 +41,8 @@ export const reducer = (state: Game, action: Action): Game => {
 		const botMove = pvs.getNextMove(newState)
 		console.timeEnd()
 
+		console.log(pvs.testStack.reverse())
+
 		if (botMove) {
 			newState.executeMove(botMove)
 		}

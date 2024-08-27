@@ -17,6 +17,8 @@ class PVS {
 	withAdjacentWalls: boolean = true
 	withCentrality: boolean = true
 
+	testStack: {score: number, move: Move, depth: number}[] = []
+
 	constructor(depth: number) {
 		this.depth = depth;
 	}
@@ -74,6 +76,8 @@ class PVS {
 			}
 
 			this.game.undoLastMove()
+
+			this.testStack.push({score, move, depth})
 
 			// should check
 			if (score > a) { // can be optimised
