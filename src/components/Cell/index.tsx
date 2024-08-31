@@ -1,5 +1,5 @@
 import React, { useContext, useMemo } from 'react';
-import { GameContext } from '../../App';
+import { GameContext } from '../../pages/gameboard.tsx';
 import { Orientation } from '../../model/Wall';
 import { getColor } from '../../utils';
 import './index.scss';
@@ -53,14 +53,14 @@ const Cell: React.FC<ICellProps> = props => {
 	const { state, dispatch } = useContext(GameContext);
 
 	const [isVWallAvailable, isHWallAvailable] = useMemo(() => {
-		return [state.wallsAvailable.has(`${x}${y}v`), state.wallsAvailable.has(`${x}${y}h`)];
-	}, [JSON.stringify([...state.wallsAvailable])]);
+		return [state.game.wallsAvailable.has(`${x}${y}v`), state.game.wallsAvailable.has(`${x}${y}h`)];
+	}, [JSON.stringify([...state.game.wallsAvailable])]);
 
 	const movePlayer = (e: React.MouseEvent<HTMLElement>, xPos: number, yPos: number) => {
 		e.preventDefault();
 		e.stopPropagation();
 		if (isPossibleMove) {
-			const { position } = state.getCurrentPlayer();
+			const { position } = state.game.getCurrentPlayer();
 			dispatch({ type: 'MOVE_PLAYER', value: { newPosition: { x: xPos, y: yPos }, previousPosition: position } });
 		}
 	};
