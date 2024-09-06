@@ -1,5 +1,5 @@
 import React, { useContext, useMemo } from 'react';
-import { GameContext } from '../../pages/gameboard.tsx';
+import { GameContext } from '../../App.tsx';
 import { Orientation } from '../../model/Wall';
 import { getColor } from '../../utils';
 import './index.scss';

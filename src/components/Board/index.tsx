@@ -1,6 +1,6 @@
 import React, { useContext, useMemo } from 'react';
 import Cell from '../Cell';
-import { GameContext } from '../../pages/gameboard.tsx';
+import { GameContext } from '../../App.tsx';
 import { MoveWall, isPlayerMove } from '../../model/Move.ts';
 
 interface IBoard {

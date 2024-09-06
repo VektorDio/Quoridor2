@@ -1,13 +1,32 @@
 import './App.css';
 import GameBoard from './pages/gameboard.tsx';
 import TreeCanvas from './components/TreeBuilder';
-import { useState } from 'react';
+import React, { createContext, useReducer, useState } from 'react';
+import Game from './model/Game.ts';
+import { TreeNode } from './bots/PVS.ts';
+import { Action } from './reducer/type';
+import { reducer } from './reducer';
+
+export interface AppState {
+	game: Game;
+	rootNode?: TreeNode;
+}
+
+export interface Context {
+	state: AppState;
+	dispatch: React.Dispatch<Action>;
+}
+
+const game = new Game();
+
+export const GameContext = createContext<Context>({
+	state: {} as AppState,
+	dispatch: () => {}
+});
 
 function App() {
 	const [showBoard, setShowBoard] = useState(true);
-	const [botState, setBotState] = useState([]);
-
-	//console.log(state);
+	const [appState, dispatch] = useReducer(reducer, { game, rootNode: undefined });
 
 	return (
 		<div className={showBoard ? 'boardRoot' : 'visualizerRoot'}>
@@ -17,7 +36,11 @@ function App() {
 			>
 				Change
 			</button>
-			{showBoard ? <GameBoard setBotState={setBotState} /> : <TreeCanvas rootNode={botState[0]} />}
+			{showBoard ? (
+				<GameBoard dispatch={dispatch} state={appState} />
+			) : (
+				appState.rootNode && <TreeCanvas rootNode={appState.rootNode} />
+			)}
 		</div>
 	);
 }

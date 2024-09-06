@@ -5,7 +5,7 @@ import { deepCopy } from '../utils';
 import { Bounce, toast } from 'react-toastify';
 //import Negamax from '../bots/Negamax.ts';
 import pvs from '../bots/PVS.ts';
-import { AppState } from '../pages/gameboard.tsx';
+import { AppState } from '../App.tsx';
 
 const ACTIONS: Record<ActionTypes, (state: Game, value: Move) => any> = {
 	MOVE_PLAYER: (state, value) => {
@@ -46,7 +46,9 @@ export const reducer = (state: AppState, action: Action): AppState => {
 			newState.executeMove(botMove);
 		}
 
-		return { game: newState, rootNode: [pvs.rootNode] }; // move to variable
+		const rootNode = pvs.rootNode;
+
+		return { game: newState, rootNode };
 	} catch (e: any) {
 		toast.error(e?.message, {
 			position: 'bottom-right',
@@ -60,6 +62,6 @@ export const reducer = (state: AppState, action: Action): AppState => {
 			transition: Bounce
 		});
 		console.log(e?.message);
-		return { game: state.game, rootNode: [] };
+		return { game: state.game, rootNode: undefined };
 	}
 };

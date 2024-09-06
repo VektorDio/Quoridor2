@@ -1,36 +1,16 @@
-import Game from '../model/Game.ts';
 import Board from '../components/Board';
-import React, { createContext, useEffect, useMemo, useReducer } from 'react';
-import { reducer } from '../reducer';
-import { Action } from '../reducer/type';
+import React, { useMemo } from 'react';
 import PlayerCard from '../components/PlayerCard/index.tsx';
 import { getColor } from '../utils';
-import { TreeNode } from '../bots/PVS.ts';
+import { AppState, GameContext } from '../App.tsx';
+import { Action } from '../reducer/type';
 
-export interface AppState {
-	game: Game;
-	rootNode: TreeNode[];
-}
-
-export interface Context {
+type Props = {
 	state: AppState;
 	dispatch: React.Dispatch<Action>;
-}
+};
 
-const game = new Game();
-
-export const GameContext = createContext<Context>({
-	state: {} as AppState,
-	dispatch: () => {}
-});
-
-function GameBoard({ setBotState }) {
-	const [state, dispatch] = useReducer(reducer, { game, rootNode: [] });
-
-	useEffect(() => {
-		setBotState(state.rootNode);
-	}, [state.rootNode]);
-
+function GameBoard({ state, dispatch }: Props) {
 	return useMemo(() => {
 		return (
 			<GameContext.Provider value={{ state, dispatch }}>
@@ -47,7 +27,7 @@ function GameBoard({ setBotState }) {
 							);
 						})}
 					</div>
-					<Board board={Array(state.game.gridWidth).fill(Array(state.game.gridWidth).fill('0'))}></Board>
+					<Board board={Array(state.game.gridWidth).fill(Array(state.game.gridWidth).fill('0'))} />
 					<div className="main-col w-1/4"></div>
 				</div>
 			</GameContext.Provider>
