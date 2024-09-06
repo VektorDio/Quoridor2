@@ -46,7 +46,7 @@ class PVS {
 				? `${move.newPosition.x}${move.newPosition.y}`
 				: move.position
 			: undefined;
-		this.rootNode.score = score;
+		this.rootNode.score = -score;
 
 		console.log(this.rootNode);
 		return move || undefined; // no available moves
@@ -92,6 +92,7 @@ class PVS {
 					: move.position
 				: undefined;
 
+			// tree memoization
 			const childNode = { depth, score: 0, move: moveString, children: [], parent: parentNode };
 			parentNode.children.push(childNode);
 
@@ -104,8 +105,8 @@ class PVS {
 				}
 			}
 
-			// ??
-			childNode.score = -score;
+			// trying to save real score?
+			childNode.score = score;
 
 			this.game.undoLastMove();
 
