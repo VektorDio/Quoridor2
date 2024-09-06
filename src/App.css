@@ -15,6 +15,7 @@
 .visualizerRoot {
   margin: 0;
   text-align: center;
+  overflow-x: scroll;
 }
 
 .logo {

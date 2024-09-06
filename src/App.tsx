@@ -12,7 +12,7 @@ function App() {
 	return (
 		<div className={showBoard ? 'boardRoot' : 'visualizerRoot'}>
 			<button
-				className="absolute p-4 z-100 left-4 top-4 bg-gray-500 rounded"
+				className="absolute p-4 z-10 left-4 top-4 bg-gray-500 rounded"
 				onClick={() => setShowBoard(prev => !prev)}
 			>
 				Change

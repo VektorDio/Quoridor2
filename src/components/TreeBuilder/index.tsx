@@ -1,162 +1,115 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import './treeBuilder.css';
+import { TreeNode } from '../../bots/PVS.ts';
 
-type TreeNode = {
-	depth: number;
-	score: number;
-	move: string | undefined;
-	children: TreeNode[];
+type Props = {
+	rootNode: TreeNode;
 };
 
-const NODE_RADIUS = 25;
-const VERTICAL_GAP = 400;
-const HORIZONTAL_GAP = 55;
+const TreeBuilder: React.FC<Props> = ({ rootNode }) => {
+	const [currentNode, setCurrentNode] = useState<TreeNode>(rootNode);
+	const nodeRefs = useRef<(HTMLDivElement | null)[]>([]);
+	const [lines, setLines] = useState<{ x1: number; y1: number; x2: number; y2: number }[]>([]);
 
-function TreeCanvas({ rootNode }: { rootNode: TreeNode }) {
-	const canvasRef = useRef<HTMLCanvasElement | null>(null);
-	const [offset, setOffset] = useState({ x: 0, y: 0 });
-	const [isDragging, setIsDragging] = useState(false);
-	const [start, setStart] = useState({ x: 0, y: 0 });
+	const handleClick = (node: TreeNode) => {
+		setCurrentNode(node);
+	};
 
-	let lastDepthNodeX: number = 10;
-	const maxDepth = rootNode.depth;
+	// Function to calculate line positions between parent and children
+	const calculateLinePositions = () => {
+		const parentEl = nodeRefs.current[0]; // Parent node
+		const containerEl = document.querySelector('.tree-container'); // Container
 
-	function drawTree(
-		ctx: CanvasRenderingContext2D,
-		node: TreeNode,
-		offsetX: number,
-		offsetY: number
-	): [number, number] {
-		if (node.children.length > 0) {
-			let firstX = 0;
-			let lastX = 0;
-			const childrenCords: [number, number][] = [];
+		if (!parentEl || !containerEl) return;
 
-			for (let i = 0; i < node.children.length; i++) {
-				const childCords = drawTree(ctx, node.children[i], offsetX, offsetY);
-				childrenCords.push(childCords);
+		const containerRect = containerEl.getBoundingClientRect();
+		const parentRect = parentEl.getBoundingClientRect();
 
-				const [childX] = childCords;
+		// Calculate parent center point relative to the container
+		const parentCenterX = parentRect.left - containerRect.left + parentRect.width / 2;
+		const parentBottomY = parentRect.top - containerRect.top + parentRect.height;
 
-				if (node.children.length >= 2) {
-					if (i === 0) {
-						firstX = childX;
-					} else if (i === node.children.length - 1) {
-						lastX = childX;
-					}
-				} else {
-					firstX = childX;
-					lastX = firstX;
-				}
-			}
+		const newLines = currentNode.children.map((_child, index) => {
+			const childEl = nodeRefs.current[index + 1]; // Child node
+			if (!childEl) return null;
 
-			const currentX = (firstX + lastX) / 2;
-			const currentY = (maxDepth - node.depth) * VERTICAL_GAP;
-			drawNode(ctx, currentX + offsetX, currentY + offsetY, `${node.score}`, node.move);
+			const childRect = childEl.getBoundingClientRect();
 
-			for (const [childX, childY] of childrenCords) {
-				ctx.beginPath();
-				ctx.strokeStyle = '#000000';
-				ctx.moveTo(childX + offsetX, childY + offsetY - NODE_RADIUS);
-				ctx.lineTo(currentX + offsetX, currentY + offsetY + NODE_RADIUS);
-				ctx.stroke();
-			}
+			// Calculate child center point relative to the container
+			const childCenterX = childRect.left - containerRect.left + childRect.width / 2;
+			const childTopY = childRect.top - containerRect.top;
 
-			return [currentX, currentY];
-		} else {
-			lastDepthNodeX += HORIZONTAL_GAP;
-			const x = lastDepthNodeX;
-			const y = (maxDepth - node.depth) * VERTICAL_GAP;
-			drawNode(ctx, x + offsetX, y + offsetY, node.score + '', node.move);
+			return {
+				x1: parentCenterX,
+				y1: parentBottomY,
+				x2: childCenterX,
+				y2: childTopY
+			};
+		});
 
-			return [x, y];
-		}
-	}
-
-	function drawNode(
-		ctx: CanvasRenderingContext2D,
-		x: number,
-		y: number,
-		firstText: string,
-		secondText: string | undefined
-	) {
-		ctx.fillStyle = '#3e88a6';
-		ctx.beginPath();
-		ctx.arc(x, y, NODE_RADIUS, 0, 2 * Math.PI);
-		ctx.fill();
-		ctx.strokeStyle = '#000000';
-		ctx.stroke();
-
-		ctx.fillStyle = '#ffffff';
-		ctx.textAlign = 'center';
-		ctx.font = '14px Arial';
-		ctx.fillText(firstText, x, y - 5);
-		if (secondText) {
-			ctx.fillText(secondText, x, y + 13);
-		}
-	}
+		setLines(newLines as { x1: number; y1: number; x2: number; y2: number }[]);
+	};
 
 	useEffect(() => {
-		const canvas = canvasRef.current;
-		if (canvas) {
-			const ctx = canvas.getContext('2d');
-			if (ctx) {
-				ctx.clearRect(0, 0, canvas.width, canvas.height);
-				drawTree(ctx, rootNode, offset.x, offset.y);
-			}
+		const parentEl = nodeRefs.current[0]; // Parent node
+		if (parentEl) {
+			parentEl.scrollIntoView({
+				behavior: 'smooth',
+				block: 'center',
+				inline: 'center'
+			});
 		}
-	}, [rootNode, offset]);
+	}, [currentNode]);
 
+	// Recalculate lines and center the viewport whenever the currentNode changes
 	useEffect(() => {
-		const handleResize = () => {
-			const canvas = canvasRef.current;
-			if (canvas) {
-				canvas.width = window.innerWidth;
-				canvas.height = window.innerHeight;
-			}
-		};
-
-		handleResize(); // Initial resize
-		window.addEventListener('resize', handleResize);
-		return () => window.removeEventListener('resize', handleResize);
-	}, []);
-
-	const handleMouseDown = (e: React.MouseEvent) => {
-		setIsDragging(true);
-		setStart({ x: e.clientX, y: e.clientY });
-	};
-
-	const handleMouseMove = (e: React.MouseEvent) => {
-		if (isDragging) {
-			const dx = e.clientX - start.x;
-			const dy = e.clientY - start.y;
-			setOffset(prevOffset => ({
-				x: prevOffset.x + dx,
-				y: prevOffset.y + dy
-			}));
-			setStart({ x: e.clientX, y: e.clientY });
-		}
-	};
-
-	const handleMouseUp = () => {
-		setIsDragging(false);
-	};
+		calculateLinePositions();
+	}, [currentNode]);
 
 	return (
-		<canvas
-			ref={canvasRef}
-			width={window.innerWidth}
-			height={window.innerHeight}
-			onMouseDown={handleMouseDown}
-			onMouseMove={handleMouseMove}
-			onMouseUp={handleMouseUp}
-			style={{
-				border: '1px solid black',
-				cursor: isDragging ? 'grabbing' : 'grab',
-				width: '100lvw',
-				height: '100lvh'
-			}}
-		></canvas>
-	);
-}
+		<div className="tree-container">
+			<svg className="svg-lines">
+				{lines.map((line, index) => (
+					<line
+						key={index}
+						x1={line.x1}
+						y1={line.y1}
+						x2={line.x2}
+						y2={line.y2}
+						stroke="#000"
+						strokeWidth="3"
+					/>
+				))}
+			</svg>
 
-export default TreeCanvas;
+			<div
+				className="node parent"
+				ref={el => (nodeRefs.current[0] = el)}
+				onClick={() => currentNode.parent && handleClick(currentNode.parent)}
+			>
+				<div className="content">
+					<p>S: {currentNode.score}</p>
+					<p>M: {currentNode.move || ''}</p>
+				</div>
+			</div>
+
+			<div className="children">
+				{currentNode.children.map((child, index) => (
+					<div
+						key={index}
+						className="node child"
+						ref={el => (nodeRefs.current[index + 1] = el)}
+						onClick={() => handleClick(child)}
+					>
+						<div className="content">
+							<p>S: {child.score}</p>
+							<p>M: {child.move || ''}</p>
+						</div>
+					</div>
+				))}
+			</div>
+		</div>
+	);
+};
+
+export default TreeBuilder;

@@ -10,6 +10,7 @@ export type TreeNode = {
 	score: number;
 	move?: string;
 	children: TreeNode[];
+	parent?: TreeNode;
 };
 
 class PVS {
@@ -40,13 +41,11 @@ class PVS {
 		// alpha and beta are book numbers
 		const [score, move] = this.pvs(this.depth, -99, 99, color, this.rootNode);
 
-		const moveString = move
+		this.rootNode.move = move
 			? isPlayerMove(move)
 				? `${move.newPosition.x}${move.newPosition.y}`
 				: move.position
 			: undefined;
-
-		this.rootNode.move = moveString;
 		this.rootNode.score = score;
 
 		console.log(this.rootNode);
@@ -93,7 +92,7 @@ class PVS {
 					: move.position
 				: undefined;
 
-			const childNode = { depth, score: 0, move: moveString, children: [] };
+			const childNode = { depth, score: 0, move: moveString, children: [], parent: parentNode };
 			parentNode.children.push(childNode);
 
 			if (i === 0) {
