@@ -59,7 +59,7 @@
 }
 
 .parent {
-    margin-bottom: 300px;
+    margin-bottom: 350px;
 }
 
 .children {
@@ -85,5 +85,5 @@
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: -1; /* Ensure the lines are behind the nodes */
+    z-index: -1;
 }
