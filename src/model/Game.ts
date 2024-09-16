@@ -64,7 +64,7 @@ export default class Game implements Model {
 			secondEdge = this.getRightEdge(x, y + 1);
 		}
 
-		// trying to place wall
+		// trying to place wall by deleting pass in grid
 		this.gridEdges.delete(firstEdge);
 		this.gridEdges.delete(secondEdge);
 
@@ -80,7 +80,7 @@ export default class Game implements Model {
 		if (!winConditionsIsAccessible) {
 			this.gridEdges.add(firstEdge);
 			this.gridEdges.add(secondEdge);
-			console.log('Wall blocks someone`s path');
+			//console.log('Wall blocks someone`s path');
 			throw new Error('Wall blocks someone`s path');
 		}
 
@@ -202,25 +202,19 @@ export default class Game implements Model {
 	}
 
 	checkWinCondition(playerNode: Cell, playerGoal: Set<string>): boolean {
-		const toDoSet: Set<string> = new Set();
-		const doneSet: Set<string> = new Set();
-		toDoSet.add(playerNode.x + '' + playerNode.y);
+		const toDoStack: string[] = [`${playerNode.x}${playerNode.y}`]; // Initialize stack with the starting node
+		const doneSet: Set<string> = new Set(toDoStack); // Initialize doneSet with the starting node
 
+		while (toDoStack.length > 0) {
+			const node = toDoStack.pop()!;
 
-		while (toDoSet.size > 0) {
-			//const node = toDoSet.values().next().value
-			const node = [...toDoSet].pop();
-
-			if (node !== undefined) { // node can't be undefined, but precompiler don't know this
-				toDoSet.delete(node)
-				doneSet.add(node)
-				for (const adjustedNode of this.adjustedNodes(node)) {
-					if (playerGoal.has(adjustedNode)) {
-						return true;
-					}
-					if (!doneSet.has(adjustedNode)) { // here we don't need duplicate check, as we're using set
-						toDoSet.add(adjustedNode)
-					}
+			for (const adjustedNode of this.adjustedNodes(node)) {
+				if (playerGoal.has(adjustedNode)) {
+					return true;
+				}
+				if (!doneSet.has(adjustedNode)) {
+					doneSet.add(adjustedNode);
+					toDoStack.push(adjustedNode);
 				}
 			}
 		}
@@ -229,8 +223,8 @@ export default class Game implements Model {
 
 	private adjustedNodes(node: string): string[] {
 		const nodes = [];
-		const x = parseInt(node[0]);
-		const y = parseInt(node[1]);
+		const x = parseInt(node[0], 10);
+		const y = parseInt(node[1], 10);
 
 		if(this.checkWalkableTop(x, y)) {
 			// this is not very readable, but should be one of the fastest way to convert int to string
@@ -247,6 +241,31 @@ export default class Game implements Model {
 		}
 		return nodes;
 	}
+
+	// checkWinConditionPrev(playerNode: Cell, playerGoal: Set<string>): boolean {
+	// 	const toDoSet: Set<string> = new Set();
+	// 	const doneSet: Set<string> = new Set();
+	// 	toDoSet.add(playerNode.x + '' + playerNode.y);
+	//
+	// 	while (toDoSet.size > 0) {
+	// 		//const node = toDoSet.values().next().value
+	// 		const node = [...toDoSet].pop(); // bad performance
+	//
+	// 		if (node !== undefined) { // node can't be undefined, but precompiler don't know this
+	// 			toDoSet.delete(node)
+	// 			doneSet.add(node)
+	// 			for (const adjustedNode of this.adjustedNodes(node)) {
+	// 				if (playerGoal.has(adjustedNode)) {
+	// 					return true;
+	// 				}
+	// 				if (!doneSet.has(adjustedNode)) { // here we don't need duplicate check, as we're using set
+	// 					toDoSet.add(adjustedNode)
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// 	return false;
+	// }
 
 	private initializeEdges(): void {
 		// actually, its (width * (width - 1)) * 2, but we need this to make it square

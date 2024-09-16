@@ -1,0 +1,89 @@
+.tree-container {
+    position: relative;
+    height: calc(100vh - 20px); /* accounting for scrollbar */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 100px;
+    overflow: hidden;
+}
+
+.node {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #246e86;
+    font-size: 15px;
+    font-weight: bold;
+    user-select: none;
+}
+
+.node:hover {
+    background-color: #2a8aa9;
+}
+
+.root-node {
+    background-color: #af2c2c;
+}
+
+.root-node:hover {
+    background-color: #c46666 !important;
+}
+
+.selected-node {
+    background-color: #238a23;
+}
+
+.selected-node:hover {
+    background-color: #51af51 !important;
+}
+
+.top-right {
+    position: absolute;
+    top: -5px;
+    right: -12px;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.bottom-right {
+    position: absolute;
+    bottom: -5px;
+    right: -12px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.parent {
+    margin-bottom: 350px;
+}
+
+.children {
+    display: flex;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+}
+
+.child {
+    margin: 0 20px;
+}
+
+.content {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.svg-lines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+}

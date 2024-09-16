@@ -1,49 +1,53 @@
-import './App.css';
-import Game from './model/Game.ts';
-import Board from './components/Board';
-import React, { createContext, useMemo, useReducer } from 'react';
-import { reducer } from './reducer';
-import { Action } from './reducer/type';
-import PlayerCard from './components/PlayerCard/index.tsx';
-import { getColor } from './utils';
+import React, { createContext, useReducer, useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChessBoard, faShareNodes } from '@fortawesome/free-solid-svg-icons';
 
-export interface Context {
-	state: Game;
+import './App.css';
+import TreeCanvas from './components/TreeBuilder';
+import Game from './model/Game';
+import { TreeNode } from './bots/PVS';
+import { Action } from './reducer/type';
+import { reducer } from './reducer';
+import GameBoard from './pages/gameboard.tsx';
+
+export interface AppState {
+	game: Game;
+	rootNode?: TreeNode;
+}
+
+export interface AppContext {
+	state: AppState;
 	dispatch: React.Dispatch<Action>;
 }
 
 const game = new Game();
 
-export const GameContext = createContext<Context>({
-	state: {} as Game,
+export const GameContext = createContext<AppContext>({
+	state: {} as AppState,
 	dispatch: () => {}
 });
 
-
 function App() {
-	const [state, dispatch] = useReducer(reducer, game);
+	const [isBoardVisible, setIsBoardVisible] = useState(true);
+	const [appState, dispatch] = useReducer(reducer, { game, rootNode: undefined });
 
-	return useMemo(() => {
-		return (
-			<GameContext.Provider value={{ state, dispatch }}>
-				<div className="flex flex-nowrap items-end justify-between">
-					<div className="main-col w-1/4 text-center">
-						{state.players.map((player, idx) => {
-							return (
-								<PlayerCard
-									color={getColor(idx)}
-									wallsAmount={player.walls}
-									isTurn={player === state.getCurrentPlayer()}
-								/>
-							);
-						})}
-					</div>
-					<Board board={Array(state.gridWidth).fill(Array(state.gridWidth).fill('0'))}></Board>
-					<div className="main-col w-1/4"></div>
-				</div>
-			</GameContext.Provider>
-		);
-	}, [JSON.stringify(state.moveHistory)]);
+	const toggleView = () => setIsBoardVisible(prev => !prev);
+
+	return (
+		<div className={isBoardVisible ? 'boardRoot' : 'visualizerRoot'}>
+			{appState.rootNode && (
+				<button className="absolute p-2 z-10 left-4 top-4 bg-gray-500 rounded w-16 h-16" onClick={toggleView}>
+					<FontAwesomeIcon icon={isBoardVisible ? faShareNodes : faChessBoard} size="3x" />
+				</button>
+			)}
+
+			{isBoardVisible ? (
+				<GameBoard dispatch={dispatch} state={appState} />
+			) : (
+				appState.rootNode && <TreeCanvas rootNode={appState.rootNode} color={1} />
+			)}
+		</div>
+	);
 }
 
 export default App;

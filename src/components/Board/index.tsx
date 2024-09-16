@@ -10,8 +10,8 @@ interface IBoard {
 const Board: React.FC<IBoard> = ({ board }) => {
 	const { state } = useContext(GameContext);
 	const wallHistory: Array<MoveWall> = useMemo(
-		() => state.moveHistory.filter(move => !isPlayerMove(move)) as Array<MoveWall>,
-		[JSON.stringify(state.moveHistory)]
+		() => state.game.moveHistory.filter(move => !isPlayerMove(move)) as Array<MoveWall>,
+		[JSON.stringify(state.game.moveHistory)]
 	);
 
 	const isWallExist = (history: Array<MoveWall>, wall: string) => {
@@ -19,12 +19,12 @@ const Board: React.FC<IBoard> = ({ board }) => {
 	};
 
 	const playersPos = useMemo(() => {
-		return state.players.map((player, index) => ({ index, position: player.position }));
-	}, [JSON.stringify(state.players)]);
+		return state.game.players.map((player, index) => ({ index, position: player.position }));
+	}, [JSON.stringify(state.game.players)]);
 
 	const possibleMoves = useMemo(() => {
-		return state.possiblePlayerMoves();
-	}, [JSON.stringify(state.moveHistory)]);
+		return state.game.possiblePlayerMoves();
+	}, [JSON.stringify(state.game.moveHistory)]);
 
 	const renderCell = (x: number, y: number): React.ReactNode => {
 		const playerIndex: number | undefined = playersPos.find(
